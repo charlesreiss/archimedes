@@ -533,7 +533,7 @@ if ((($due < $now) || ($isstaff && $isself))
 
 
 // display upload tag
-if ($submittable) {
+if ($submittable || $isstaff) {
     echo "<form action='$_SERVER[SCRIPT_NAME]?submitted=$slug$ext' method='post' enctype='multipart/form-data' class='$class'>
     <input type='hidden' name='slug' value='$slug'/>
     <p>You may ";
