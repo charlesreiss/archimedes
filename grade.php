@@ -610,7 +610,7 @@ function ajax(payload, qstring, empty=null, response=null) {
 </head><body onload="imageresize(); setUpCollapses(); (window.onfocus ? window.onfocus() : null); dotimes(); docollapse(); highlight();">
 <?php
 
-function gradeableTree($limit=False) {
+function gradeableTree($limit=False,$include_open=False) {
     global $issuperuser;
     $ans = array();
     $everyone = fullRoster();

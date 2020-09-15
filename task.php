@@ -42,13 +42,24 @@ function accept_submission() {
         user_error_msg("Tried to uploaded files for <strong>$slug</strong>, which does not accept uploads.");
         return;
     }
+    if (!$isself) {
+        user_notice_msg("Uploading file on behalf of $user.");
+    }
     if (assignmentTime('open', $details) > time() && !($isstaff && $isself)) {
-        user_error_msg("Tried to upload files for <strong>$slug</strong>, which is not yet open.");
-        return;
+        if (!$isself && $isstaff) {
+            user_notice_msg("Uploading file for <strong>$slug</strong>, which is not yet open.");
+        } else {
+            user_error_msg("Tried to upload files for <strong>$slug</strong>, which is not yet open.");
+            return;
+        }
     }
     if (closeTime($details) < time() && !($isstaff && $isself)) {
-        user_error_msg("Tried to upload files for <strong>$slug</strong>, which has already closed.");
-        return;
+        if (!$isself && $isstaff) {
+            user_notice_msg("Uploading file for <strong>$slug</strong>, which has already closed.");
+        } else {
+            user_error_msg("Tried to upload files for <strong>$slug</strong>, which has already closed.");
+            return;
+        }
     }
     
 
@@ -514,7 +525,7 @@ echo '</div>';
 
 
 // display feedback
-if ((($due < $now) || ($isstaff && $isself))
+if ((!array_key_exists('hide_grade_before_due', $details) || (($due < $now) || ($isstaff && $isself)))
 && array_key_exists('grade', $details)
 && !array_key_exists('.ext-req', $details)
 && !array_key_exists('withhold', $details)) {
@@ -533,7 +544,7 @@ if ((($due < $now) || ($isstaff && $isself))
 
 
 // display upload tag
-if ($submittable) {
+if ($submittable || $isstaff) {
     echo "<form action='$_SERVER[SCRIPT_NAME]?submitted=$slug$ext' method='post' enctype='multipart/form-data' class='$class'>
     <input type='hidden' name='slug' value='$slug'/>
     <p>You may ";
