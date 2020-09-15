@@ -546,8 +546,6 @@ function respond_to_regrade(id) {
         slug:id.split('|',2)[0], 
         student:id.split('|',3)[1],
     }
-    var tmp = _grade(id);
-    for(var key in tmp) ans[key] = tmp[key];
     
     var rg = document.getElementById(id+"|regrade");
     if (rg) {
