@@ -274,7 +274,7 @@ function show_grade($gradeobj) {
             } else if ($entry['type'] == 'comment') {
             } else {
                 if ($entry['weight'] == 0) {
-                    _show_grade_obj_row($ans, $r, $entry['name']);
+                    _show_grade_obj_row($ans, $r, $entry['name'], '', False);
                 } else {
                     _show_grade_obj_row($ans, $r, $entry['name'] . ' (' . $entry['weight'] . ' points)');
                 }
@@ -335,7 +335,7 @@ function _show_grade_obj_points(&$ans, $ratio, $weight, $comment) {
     $ans[] = htmlspecialchars($comment);
     $ans[] = '</td></tr>';
 }
-function _show_grade_obj_row(&$ans, $ratio, $comment, $percent=False, $prefix='') {
+function _show_grade_obj_row(&$ans, $ratio, $comment, $percent=False, $prefix='', $include_portion=True) {
     $ans[] = '<tr>';
     if ($ratio !== FALSE) {
 	$ans[] = '<td class="';
@@ -347,11 +347,11 @@ function _show_grade_obj_row(&$ans, $ratio, $comment, $percent=False, $prefix=''
             $ans[] = round($ratio*100, 1);
             $ans[] = '%';
         } else {
-            if ($ratio == 0.5) {
+            if ($ratio == 0.5 && $include_portion) {
                 $ans[] = 'Kind-of (half credit)';
-            } else if ($ratio == 0.75) {
+            } else if ($ratio == 0.75 && $include_portion) {
                 $ans[] = 'Kind-of (3/4ths credit)';
-            } else if ($ratio == 0.25) {
+            } else if ($ratio == 0.25 && $include_portion) {
                 $ans[] = 'Kind-of (1/4ths credit)';
             } else {
                 $ans[] = ($ratio >= 1) ? 'Yes!' : ($ratio > 0 ? 'Kind‑of' : 'No');
