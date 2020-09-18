@@ -279,9 +279,6 @@ function show_grade($gradeobj) {
                     _show_grade_obj_row($ans, $r, $entry['name'] . ' (' . $entry['weight'] . ' points)');
                 }
             }
-            if (array_key_exists('comment', $entry) && strlen($entry['comment']) > 0) {
-                _show_grade_obj_row($ans, false, $entry['comment']);
-            }
             if (array_key_exists('comments', $entry) && strlen($entry['comments']) > 0) {
                 _show_grade_obj_row($ans, false, $entry['comments']);
             }
