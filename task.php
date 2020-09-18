@@ -274,7 +274,7 @@ function show_grade($gradeobj) {
             } else if ($entry['type'] == 'comment') {
             } else {
                 if ($entry['weight'] == 0) {
-                    _show_grade_obj_row($ans, $r, $entry['name'], '', False);
+                    _show_grade_obj_row($ans, $r, $entry['name'], '', false);
                 } else {
                     _show_grade_obj_row($ans, $r, $entry['name'] . ' (' . $entry['weight'] . ' points)');
                 }
