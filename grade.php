@@ -187,7 +187,7 @@ function item_tag($id, $rubric, $selected, $weight, $comment) {
             $result .= "<label class='na'><input type='radio' $data value='N/A' $cur_checked>N/A</label>";
         }
         $result .= "
-            <span class='label'>$name</span>
+            <span class='label'>$name</span> ($rubric_weight points)
         ";
         $result .="
         </div>";
