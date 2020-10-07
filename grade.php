@@ -148,13 +148,13 @@ function item_tag($id, $rubric, $selected, $weight, $comment) {
             <label for='$id'>$name</label>: <input type='text' $data data-points-of='$rubric_weight' value='$value'> of $rubric_weight
         ";
         $result .= "</div>";
-        if (array_key_exists('allow_comment', $rubric)) {
+        #if (array_key_exists('allow_comment', $rubric)) {
             $result .= "
                 <div class='itemcomment'><label for='$id|comment'>Item comment:</label>
                 <textarea $data data-is-item-comment='yes' id='$id|comment'>$comment</textarea>
                 </div>
             ";
-        }
+        #}
         return $result;
     } else {
         $result = "<div class='item'>";
