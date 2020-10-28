@@ -802,7 +802,9 @@ function asgn_details($student, $slug) {
             }
             $details['policy-late-penalty'] = $late_policy[$late_days];
             if (array_key_exists('grade', $details)) {
-                if (array_key_exists('.adjustment', $details['grade'])) {
+                if (array_key_exists('.skip-auto-late', $details['grade'])) {
+                    # do nothing
+                } else if (array_key_exists('.adjustment', $details['grade'])) {
                     $details['grade']['.adjustment'] = array(
                         'kind' => 'percentage',
                         'mult' => $details['policy-late-penalty'] * $details['grade']['.adjustment']['mult'], # FIXME: duplicated
