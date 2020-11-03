@@ -975,7 +975,7 @@ function cumulative_status($student, &$progress=False, &$projected_score=False) 
         }
         
         // handle future tasks
-        if (!array_key_exists('grade', $details)) {
+        if (!array_key_exists('grade', $details) || array_key_exists('withhold', $details)) {
             $gcode[] = 'future';
             $ans[$details['group']]['future'] += $details['weight'];
             $details['.gcode'] = $gcode;
