@@ -269,7 +269,7 @@ function show_grade($gradeobj) {
             }
 	    $human += $entry['weight'] * $r;
 	    $human_denom += $entry['weight'];
-            if ($entry['type'] == 'points') {
+            if ($entry['type'] == 'points' || $entry['type'] == 'score') {
                 _show_grade_obj_points($ans, $r, $entry['weight'], $entry['name']);
             } else if ($entry['type'] == 'comment') {
             } else {
@@ -281,6 +281,9 @@ function show_grade($gradeobj) {
             }
             if (array_key_exists('comments', $entry) && strlen($entry['comments']) > 0) {
                 _show_grade_obj_row($ans, false, $entry['comments']);
+            }
+            if (array_key_exists('comment', $entry) && strlen($entry['comment']) > 0) {
+                _show_grade_obj_row($ans, false, $entry['comment']);
             }
 	}
     }
