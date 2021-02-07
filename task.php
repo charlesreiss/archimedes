@@ -545,6 +545,16 @@ if ($submitted) {
             echo "</li>";
         }
         echo '</ul>';
+        if (array_key_exists('.feedback-files', $details) && !array_key_exists('withhold', $details)) {
+            $feedback_count = count($details['.feedback-files']);
+            echo "<p>Grader outputs: <ul class='filelist'>";
+            foreach($details['.feedback-files'] as $name=>$path) {
+                echo "<li>";
+                echo file_download_link($name, $path) . " " . file_view_link($name, $path);
+                echo "</li>";
+            }
+            echo "</ul>";
+        }
     }
 } else if (array_key_exists('files', $details)) {
     echo 'You have not yet submitted this assignment.';
