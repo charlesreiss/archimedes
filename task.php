@@ -115,6 +115,17 @@ function accept_submission() {
         if (file_exists($linkdir . $name)) {
             rename($linkdir . $name, $linkdir . '.backup-' . $name);
         }
+        if ($details['per-basename']) {
+            $base = explode('.', $name)[0];
+            foreach ($details['.files'] as $other_name => $other_path) {
+                if ($name == $other_name) continue;
+                $other_base = explode('.', $other_name)[0];
+                if ($base == $other_base) {
+                    user_notice_msg("Marked this submission as replacing <tt>".htmlspecialchars($other_name)."</tt>.");
+                    rename($linkdir . $other_name, $linkdir . '.backup-' . $other_name);
+                }
+            }
+        }
         file_put($linkdir . '.latest', $fname . "\n" . $now);
         if (!link($realdir . $name, $linkdir . $name)) {
             user_error_msg("Received <tt>".htmlspecialchars($name)."</tt> but failed to put it into the right location to be tested (not sure why; please report this to your professor).");
