@@ -203,6 +203,9 @@ function item_tag($id, $rubric, $selected, $weight, $comment) {
 }
 
 function percent_tree($details) {
+    if (!array_key_exists('grade', $details) && array_key_exists('grade_template', $details)) {
+	$details['grade'] = $details['grade_template'];
+    }
     $id = "$details[slug]|$details[student]";
     $text = 'correct';
     $ratio = array_key_exists('grade', $details) ? $details['grade']['ratio']*100 : '';

@@ -115,6 +115,17 @@ function accept_submission() {
         if (file_exists($linkdir . $name)) {
             rename($linkdir . $name, $linkdir . '.backup-' . $name);
         }
+        if ($details['per-basename']) {
+            $base = explode('.', $name)[0];
+            foreach ($details['.files'] as $other_name => $other_path) {
+                if ($name == $other_name) continue;
+                $other_base = explode('.', $other_name)[0];
+                if ($base == $other_base) {
+                    user_notice_msg("Marked this submission as replacing <tt>".htmlspecialchars($other_name)."</tt>.");
+                    rename($linkdir . $other_name, $linkdir . '.backup-' . $other_name);
+                }
+            }
+        }
         file_put($linkdir . '.latest', $fname . "\n" . $now);
         if (!link($realdir . $name, $linkdir . $name)) {
             user_error_msg("Received <tt>".htmlspecialchars($name)."</tt> but failed to put it into the right location to be tested (not sure why; please report this to your professor).");
@@ -550,6 +561,16 @@ if ($submitted) {
             echo "</li>";
         }
         echo '</ul>';
+        if (array_key_exists('.feedback-files', $details) && !array_key_exists('withhold', $details)) {
+            $feedback_count = count($details['.feedback-files']);
+            echo "<p>Grader outputs: <ul class='filelist'>";
+            foreach($details['.feedback-files'] as $name=>$path) {
+                echo "<li>";
+                echo file_download_link($name, $path) . " " . file_view_link($name, $path);
+                echo "</li>";
+            }
+            echo "</ul>";
+        }
     }
 } else if (array_key_exists('files', $details)) {
     echo 'You have not yet submitted this assignment.';
