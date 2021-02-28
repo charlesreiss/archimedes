@@ -70,6 +70,12 @@ if (is_dir($path)) {
                 }
             }
         }
+        $details = asgn_details($user, $parts[1]);
+        if ($details['withhold']) {
+            foreach ($details['.feedback-files'] as $name => $fname) {
+                unset($submitted[$name]);
+            }
+        }
         ksort($submitted);
     }
     foreach($submitted as $name=>$fname) {
