@@ -30,6 +30,12 @@ if (is_dir($path)) {
                 }
             }
         }
+        $details = asgn_details($user, $parts[1]);
+        if ($details['withhold'] && !$isstaff) {
+            foreach ($details['.feedback-files'] as $name => $fname) {
+                unset($submitted[$name]);
+            }
+        }
 
         $zip = new ZipArchive;
         $tmp = tempnam(sys_get_temp_dir(), '.sub');
