@@ -74,9 +74,11 @@ if (array_key_exists('addgrade', $_REQUEST) || array_key_exists('respondtoregrad
             foreach($rub['human'] as $i=>$val) {
                 if (!is_array($val)) $val = array('weight'=>1, 'key'=>$val, 'name'=>$val);
                 if (array_key_exists('key', $grade['human'][$i])) {
-                    if ($grade['human'][$i]['key'] != $val['key']) die('rubric has changed');
+                    if ($grade['human'][$i]['key'] != $val['key']) die('rubric has changed' . $val['key'] . 'versus' . $grade['human'][$i]['key']);
                 } else {
-                    if ($grade['human'][$i]['name'] != $val['name']) die('rubric has changed');
+                    if ($grade['human'][$i]['name'] != $val['name']) {
+                        die('rubric has changed');
+                    }
                 }
                 if (!array_key_exists('weight', $grade['human'][$i])) {
                     $grade['human'][$i]['weight'] = $val['weight'];
@@ -260,7 +262,7 @@ function hybrid_tree($details) {
         if (!is_array($item)) {
             $item = array('name' => $item, 'key' => $item, 'weight' => 1.0, 'type' => 'radio');
         }
-        if (!array_key_exists($item, 'key')) {
+        if (!array_key_exists('key', $item)) {
             $item['key'] = $item['name'];
         }
         if (array_key_exists('grade', $details)
@@ -540,17 +542,18 @@ function _grade(id) {
         ans = {kind:'hybrid', human:[]};
 
         document.getElementById(id).querySelectorAll('input[type="radio"]').forEach(function(x){
-            var key = x.parentElement.parentElement.lastElementChild.innerHTML;
+            var key = x.dataset.key;
+            var name = x.dataset.name;
             var num = x.name.split('|');
             num = Number(num[num.length-1]);
             while (num >= ans.human.length) ans.human.push(null);
             if (x.checked) {
                 if (x.value == "N/A") {
                     console.log("found na for " + num);
-                    ans.human[num] = {ratio:0.0, weight:0.0, name:key};
+                    ans.human[num] = {ratio:0.0, weight:0.0, key:key, name:name};
                 } else {
                     console.log("found " + x.value + " for " + num);
-                    ans.human[num] = {ratio:Number(x.value), name:key};
+                    ans.human[num] = {ratio:Number(x.value), key:key, name:name};
                 }
                 x.parentElement.parentElement.classList.remove('error');
             }
