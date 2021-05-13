@@ -275,7 +275,7 @@ function show_grade($gradeobj) {
 	$human_denom = 0;
 	foreach($gradeobj['human'] as $entry) {
 	    $r = $entry['ratio'];
-            if ($entry['weight'] == 0.0 && (!array_key_exists('type', $entry) || array_key_exists('sometimes_na', $entry))) {
+            if ($entry['weight'] == 0.0 && (array_key_exists('sometimes_na', $entry))) {
                 continue;
             }
 	    $human += $entry['weight'] * $r;
