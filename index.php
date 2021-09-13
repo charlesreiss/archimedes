@@ -452,6 +452,7 @@ foreach($mine as $slug=>$details) {
 
     // compute time status
     $due = assignmentTime('due', $details);
+    $expect_late_due = assignmentTime('expect-late-due', $details);
     $close = closeTime($details);
     $open = assignmentTime('open', $details);
     
@@ -497,7 +498,7 @@ foreach($mine as $slug=>$details) {
     
     if ($open > $now) echo "opens " . prettyTime($open);
     else if ($due > $now) echo "due " . prettyTime($due);
-    else if ($close > $now) echo "was due ". prettyTime($due) . " (but see late policy)";
+    else if ($expect_late_due && $expect_late_due > $now) echo "was due ". prettyTime($due) . " (but see late policy)";
     else echo "was due " . prettyTime($due);
     
     echo '</td></tr>';
