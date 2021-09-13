@@ -497,8 +497,8 @@ foreach($mine as $slug=>$details) {
     
     if ($open > $now) echo "opens " . prettyTime($open);
     else if ($due > $now) echo "due " . prettyTime($due);
-    else if ($close > $now) echo "closes " . prettyTime($close);
-    else echo "closed " . prettyTime($close);
+    else if ($close > $now) echo "was due ". prettyTime($due) . " (but see late policy)";
+    else echo "was due " . prettyTime($due);
     
     echo '</td></tr>';
 }
