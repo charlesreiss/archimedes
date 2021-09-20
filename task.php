@@ -551,10 +551,8 @@ if ($submitted) {
     } else {
         echo "Your files (<a href='view.php?file=$slug/$user$ext'>view all</a>) (<a href='download.php?file=$slug/$user$ext'>download all as .zip</a>):<ul class='filelist'>";
         foreach($details['.files'] as $name=>$path) {
-            if (array_key_exists('withhold', $details) && array_key_exists('.feedback-files', $details)) {
-                if (array_key_exists($name, $details['.feedback-files'])) {
-                    continue;
-                }
+            if (array_key_exists($name, $details['.feedback-files'])) {
+                continue;
             }
             echo "<li>";
             echo file_download_link($name, $path);
