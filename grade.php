@@ -29,7 +29,6 @@ if (array_key_exists('addgrade', $_REQUEST) || array_key_exists('respondtoregrad
             'kind'=>'regrade', 
             'msg'=>file_get_contents($reqfile),
         );
-        unlink($reqfile);
         
         $chatter[] = array(
             'user'=>$user,
@@ -39,6 +38,7 @@ if (array_key_exists('addgrade', $_REQUEST) || array_key_exists('respondtoregrad
         );
         unset($grade['regrade']);
         file_put($chatfile, json_encode($chatter)) || die('failed to record decision (may be server permission error?)');
+        unlink($reqfile);
     }
     if (array_key_exists('addgrade', $_REQUEST)) {
         $details = asgn_details($grade['student'], $grade['slug']);
