@@ -966,7 +966,7 @@ function cumulative_status($student, &$progress=False, &$projected_score=False) 
         // handle missing submissions
         if (!$future                                // closed
         && !array_key_exists('grade', $details)     // not graded
-        && array_key_exists('files',$details)       // expected files
+        && (array_key_exists('files',$details) || array_key_exists('missing-if-no-feedback', $details))      // expected files
         && !array_key_exists('.files', $details)) { // but not submitted
             $gcode[] = 'missed';
             $ans[$details['group']]['past'][] = array('slug'=>$slug, 'got'=>0, 'of'=>$details['weight']);

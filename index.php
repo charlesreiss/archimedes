@@ -469,7 +469,10 @@ foreach($mine as $slug=>$details) {
     else if ($class == 'closed') {
         if (array_key_exists('files', $details) && !array_key_exists('.files', $details))
             echo 'not submitted';
-        else echo 'awaiting feedback';
+        else if (array_key_exists('missing-if-no-feedback', $details))
+            echo 'missing';
+        else
+            echo 'awaiting feedback';
     } else if ($class == 'pending') echo 'not yet open';
     else if (!array_key_exists('files', $details)) echo 'submission handled elsewhere'; 
     else if (!array_key_exists('.files', $details)) echo 'not yet submitted';
