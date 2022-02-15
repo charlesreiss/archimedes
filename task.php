@@ -299,8 +299,12 @@ function show_grade($gradeobj) {
 	}
     }
     // comment
-    if (array_key_exists('comments', $gradeobj))
+    if (array_key_exists('comments', $gradeobj)) {
+        if (strlen($gradeobj['comments']) > 0) {
+            $ans[] = '<tr class="break"><td colspan="2"></td></tr>';
+        }
 	_show_grade_obj_row($ans, false, $gradeobj['comments']);
+    }
 
     if ($gradeobj['kind'] == 'percentage') {
 	_show_grade_obj_row($ans, $score, 'Score before adjustments', true);
