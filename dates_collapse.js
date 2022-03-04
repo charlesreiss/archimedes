@@ -8,7 +8,11 @@ function sensibleDateFormat(d) {
     if (d.getHours() > 12) { var time = (d.getHours()-12) + (d.getMinutes() != 0 ? ':' + String(d.getMinutes()).padStart(2,'0') : '') + ' pm'; }
     else { var time = d.getHours() + (d.getMinutes() != 0 ? ':' + String(d.getMinutes()).padStart(2,'0') : '') + (d.getHours() == 12 ? ' pm' : ' am'); }
     if (time == '0 am') return dow + ' ' + date;
-    return dow + ' ' + date + ' ' + time;// + ' ' + tz;
+    tz = '';
+    if (d.getTimezoneOffset() == 0) {
+        tz = 'UTC';
+    }
+    return dow + ' ' + date + ' ' + time + ' ' + tz;
 }
 
 function smallDateFormat(d) {
@@ -22,7 +26,11 @@ function smallDateFormat(d) {
     if (d.getHours() > 12) { var time = (d.getHours()-12) + (d.getMinutes() != 0 ? ':' + String(d.getMinutes()).padStart(2,'0') : '') + ' pm'; }
     else { var time = d.getHours() + (d.getMinutes() != 0 ? ':' + String(d.getMinutes()).padStart(2,'0') : '') + (d.getHours() == 12 ? ' pm' : ' am'); }
     if (time == '0 am') return dow + ' ' + date;
-    return dow + ' ' + date + ' ' + time;// + ' ' + tz;
+    tz = '';
+    if (d.getTimezoneOffset() == 0) {
+        tz = 'UTC';
+    }
+    return dow + ' ' + date + ' ' + time + ' ' + tz;
 }
 
 
