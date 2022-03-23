@@ -628,7 +628,8 @@ function studentFileTag($path, $classes='left') {
         } else if (stripos($mime, 'text') !== FALSE && filesize($path) < 4 * 1024 * 1024) {
             $contents = file_get_contents($path);
             $contents = preg_replace('/[^\n\r \t!-~]/', '', $contents);
-            return "<div class='$classes width'>File <a href='$link' target='_blank'><tt>$title</tt></a>: <input type='button' style='font-family:monospace' value='toggle visibility' onclick='e=this.nextSibling; e.setAttribute(\"style\", e.getAttribute(\"style\") ? \"\" : \"display:none\")'/><pre><code>" . htmlspecialchars($contents) . "</code></pre></div>";
+            $default_display = filesize($path) > 64 * 1024 ? " style='display:none'" : "";
+            return "<div class='$classes width'>File <a href='$link' target='_blank'><tt>$title</tt></a>: <input type='button' style='font-family:monospace' value='toggle visibility' onclick='e=this.nextSibling; e.setAttribute(\"style\", e.getAttribute(\"style\") ? \"\" : \"display:none\")'/><pre$default_display><code>" . htmlspecialchars($contents) . "</code></pre></div>";
         } else if (is_dir($path)) {
             $vlink = 'view.php?file='.rawurlencode(explode('/',$path,2)[1]);
             return "<div class='$classes width'>Directory <a href='$vlink'><tt>$title</tt></a></div>";
