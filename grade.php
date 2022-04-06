@@ -712,7 +712,7 @@ function gradeableTree($limit=False,$include_open=False) {
     foreach(assignments(true) as $slug => $details) {
         if ($limit && $slug != $limit) continue;
         $ct = closeTime($details);
-        if ($ct == True && $ct < time() || $issuperuser) {
+        if (true || ($ct == True && $ct < time() || $issuperuser)) {
             foreach(glob("uploads/$slug/*") as $dir) {
                 if (file_exists("$dir/.extension") 
                 && closeTime(json_decode(file_get_contents("$dir/.extension"),true)) > time()) {

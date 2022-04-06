@@ -371,6 +371,8 @@ function _show_grade_obj_row(&$ans, $ratio, $comment, $percent=False, $prefix=''
                 $ans[] = 'Kind-of (3/4ths credit)';
             } else if ($ratio == 0.25 && $include_portion) {
                 $ans[] = 'Kind-of (1/4ths credit)';
+            } else if ($ratio > 0 && $ratio < 1 && $include_portion) {
+                $ans[] = 'Kind-of (' . round($ratio*100, 1) . '% credit)';
             } else {
                 $ans[] = ($ratio >= 1) ? 'Yes!' : ($ratio > 0 ? 'Kind‑of' : 'No');
             }
