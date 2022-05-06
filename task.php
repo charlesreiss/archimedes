@@ -282,6 +282,8 @@ function show_grade($gradeobj) {
 	    $human_denom += $entry['weight'];
             if ($entry['type'] == 'points' || $entry['type'] == 'score') {
                 _show_grade_obj_points($ans, $r, $entry['weight'], $entry['name']);
+            } else if ($entry['type'] == 'header') {
+                _show_grade_obj_row($ans, false, $entry['label']);
             } else if ($entry['type'] == 'comment') {
             } else {
                 if ($entry['weight'] == 0) {
