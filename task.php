@@ -283,7 +283,7 @@ function show_grade($gradeobj) {
             if ($entry['type'] == 'points' || $entry['type'] == 'score') {
                 _show_grade_obj_points($ans, $r, $entry['weight'], $entry['name']);
             } else if ($entry['type'] == 'header') {
-                _show_grade_obj_row($ans, false, $entry['label']);
+                _show_grade_obj_row($ans, false, $entry['name']);
             } else if ($entry['type'] == 'comment') {
             } else {
                 if ($entry['weight'] == 0) {
