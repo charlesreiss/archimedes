@@ -79,7 +79,7 @@ function assignments($showhidden=false) {
                 $_all_assignments[$k]['fbdelay'] = array_key_exists('fbdelay', $metadata) ? $metadata['fbdelay'] : 2;
             }
         }
-        $_assignments = array_filter($_all_assignments, _filter_hidden);
+        $_assignments = array_filter($_all_assignments, '_filter_hidden');
     }
     return $showhidden ? $_all_assignments : $_assignments;
 }
