@@ -714,7 +714,7 @@ function asgn_details($student, $slug) {
         'created' => time(),
     );
 
-    $details = assignments()[$slug];
+    $details = assignments(true)[$slug];
     if (!array_key_exists('rubric', $details))
         $details['rubric'] = rubricOf($slug);
     $details['student'] = $student;
