@@ -218,7 +218,10 @@ function percent_tree($details) {
         "$id|mult", 
         "grade multiplier (e.g., for hard-coding, other prohibited activity)",
         $hasmult ? $details['grade']['.mult']['ratio']*100 : '',
-        $hasmult ? htmlspecialchars($details['grade']['.mult']['comments']) : ''
+        $hasmult ? (isset($details['grade']['.mult']['comments']) ?
+            htmlspecialchars($details['grade']['.mult']['comments']) :
+            htmlspecialchars($details['grade']['.mult']['comment'])
+        ) : ''
     );
     $hassub = array_key_exists('grade', $details) && array_key_exists('.sub',$details['grade']);
     $sub = percent_tag(
