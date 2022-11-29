@@ -954,7 +954,7 @@ function cumulative_status($student, &$progress=False, &$projected_score=False) 
         if (!array_key_exists('group', $details) 
         || $details['weight'] == 0
         || !array_key_exists($details['group'], $cg['weights'])
-        || $cg['weights'][$details['group']] < 0) {
+        || $cg['weights'][$details['group']] <= 0) {
             $gcode[] = 'non-credit';
             $details['.gcode'] = $gcode;
             continue;
