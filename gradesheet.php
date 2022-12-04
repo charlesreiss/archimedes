@@ -97,7 +97,7 @@ foreach(fullRoster() as $id=>$details) {
     echo "<td>$details[name]</td>"; // Name
     echo "<td>$section</td>"; // Groups
     echo "<td>$final</td><td>";
-    echo letterOf($final/100, true);
+    echo letterOf($final, true);
     echo "<td>".sprintf("%05.2f",$ep*100.0)."</td>";
     echo "</td><td>$bar</td>";
     echo '</tr>';

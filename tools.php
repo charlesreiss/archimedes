@@ -102,7 +102,15 @@ function coursegrade() {
 }
 
 /// applies letter to score
-function letterOf($ratio, $html=False) {
+function letterOf($final, $html=False) {
+    if ($final === FALSE) {
+        if ($html) {
+            return 'insufficient data';
+        } else {
+            return 'IN';
+        }
+    }
+    $ratio = $final / 100.0;
     foreach(coursegrade()['letters'] as $pair) {
         foreach($pair as $letter=>$bottom) {
             if ($ratio >= $bottom) return $letter;

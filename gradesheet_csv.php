@@ -38,7 +38,7 @@ foreach(fullRoster() as $id=>$details) {
     echo ",\"$details[name]\""; // Name
     echo ",\"$section\","; // Groups
     echo ",$final,"; // cumulative
-    echo letterOf($final/100).",";
+    echo letterOf($final).",";
     foreach($overall as $grp=>$scores) {
         echo "," . ($scores['earned']/($scores['earned']+$scores['missed']));
     }
