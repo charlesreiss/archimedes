@@ -103,7 +103,7 @@ function coursegrade() {
 
 /// applies letter to score
 function letterOf($final, $html=False) {
-    if ($final === FALSE) {
+    if ($final === FALSE || $final == "insufficient data") {
         if ($html) {
             return 'insufficient data';
         } else {

@@ -9,8 +9,11 @@ if (!$path) die('Failed to provide a file name');
 if (($isstaff && $isself) && strpos($path, 'support') === 0) $path = "meta/$path";
 else $path = "uploads/$path";
 
-if (realpath($path) != getcwd()."/$path") die('Invalid file name (1)');
-if (basename($path)[0] == '.') die('Invalid file name (2)');
+if ($path == "uploads/final/$user/key.pdf") { # XXX: weird special case
+} else {
+    if (realpath($path) != getcwd()."/$path") die('Invalid file name (1)');
+    if (basename($path)[0] == '.') die('Invalid file name (2)');
+}
 
 if (is_dir($path)) {
     $parts = explode('/', trim($path, '/'));
