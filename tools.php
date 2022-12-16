@@ -1089,50 +1089,45 @@ function score_of_task($details) {
     if (!$gradeobj || !array_key_exists('kind', $gradeobj)) return NAN;
     if ($gradeobj['kind'] == 'percentage') {
 	$score = $gradeobj['ratio'];
-	if (array_key_exists('.mult', $gradeobj) && $score > 0.0) {
-	    // (with multiplier)
-	    $score *= $gradeobj['.mult']['ratio'];
-	}
-	if (array_key_exists('.adjustment', $gradeobj) && $score > 0.0) {
-	    // (with multiplier)
-	    $score *= $gradeobj['.adjustment']['mult'];
-	}
-        if (array_key_exists('.sub', $gradeobj)) {
-            // (with subtraction)
-            $score -= $gradeobj['.sub']['portion'];
+    } else if ($gradeobj['kind'] == 'hybrid') {
+        // correctness
+        $score = $gradeobj['auto'];
+        $lat = array_key_exists('auto-late', $gradeobj) ? $gradeobj['auto-late'] : $score;
+        if ($lat > $score) {
+            $pen = array_key_exists('late-penalty', $gradeobj) ? $gradeobj['late-penalty'] : 0.5;
+            $score = $score + ($lat-$score)*$pen;
+        } else {
+            // if not better, use last score. The last will be the one seen during grading, so we need to grade based on it--otherwise overfitting followed by late clean-but-wrong would not be noticed.
+            $score = $lat;
         }
-	return $score;
-    }
 
-    // correctness
-    $score = $gradeobj['auto'];
-    $lat = array_key_exists('auto-late', $gradeobj) ? $gradeobj['auto-late'] : $score;
-    if ($lat > $score) {
-        $pen = array_key_exists('late-penalty', $gradeobj) ? $gradeobj['late-penalty'] : 0.5;
-        $score = $score + ($lat-$score)*$pen;
-    } else {
-        // if not better, use last score. The last will be the one seen during grading, so we need to grade based on it--otherwise overfitting followed by late clean-but-wrong would not be noticed.
-        $score = $lat;
-    }
-
-    // code coach feedback
-    $human = 0;
-    $human_denom = 0;
-    if (array_key_exists('human', $gradeobj)) {
-        foreach($gradeobj['human'] as $entry) {
-            $r = $entry['ratio'];
-            $human += $entry['weight'] * $r;
-            $human_denom += $entry['weight'];
+        // code coach feedback
+        $human = 0;
+        $human_denom = 0;
+        if (array_key_exists('human', $gradeobj)) {
+            foreach($gradeobj['human'] as $entry) {
+                $r = $entry['ratio'];
+                $human += $entry['weight'] * $r;
+                $human_denom += $entry['weight'];
+            }
         }
-    }
-    
-    // combined
-    $aw = array_key_exists('auto-weight', $gradeobj) ? $gradeobj['auto-weight'] : 0.5;
-    $score = ($human_denom > 0 ? $human/$human_denom*(1-$aw) : 0) + $score*$aw;
-    if (array_key_exists('.sub', $gradeobj)) {
-        // (with subtraction)
-        $score -= $gradeobj['.sub']['portion'];
-    }
+        
+        // combined
+        $aw = array_key_exists('auto-weight', $gradeobj) ? $gradeobj['auto-weight'] : 0.5;
+        $score = ($human_denom > 0 ? $human/$human_denom*(1-$aw) : 0) + $score*$aw;
+    } else if ($gradeobj['kind'] == 'rubric') {
+        // code coach feedback
+        $rubric = 0;
+        $rubric_denom = 0;
+        if (array_key_exists('items', $gradeobj)) {
+            foreach($gradeobj['rubric'] as $entry) {
+                $r = $entry['ratio'];
+                $rubric += $entry['weight'] * $r;
+                $rubric_denom += $entry['weight'];
+            }
+        }
+        $score = $rubric*1.0/$rubric_denom;
+
     if (array_key_exists('.mult', $gradeobj) && $score > 0.0) {
         // (with multiplier)
         $score *= $gradeobj['.mult']['ratio'];
@@ -1141,7 +1136,10 @@ function score_of_task($details) {
         // (with multiplier)
         $score *= $gradeobj['.adjustment']['mult'];
     }
-
+    if (array_key_exists('.sub', $gradeobj)) {
+        // (with subtraction)
+        $score -= $gradeobj['.sub']['portion'];
+    }
     return $score;
 }
 

@@ -204,6 +204,27 @@ function item_tag($id, $rubric, $selected, $weight, $comment) {
     }
 }
 
+function get_adjust_section($details) $id, {
+    $hasmult = array_key_exists('grade', $details) && array_key_exists('.mult',$details['grade']);
+    $mult = percent_tag(
+        "$id|mult", 
+        "grade multiplier (e.g., for hard-coding, other prohibited activity)",
+        $hasmult ? $details['grade']['.mult']['ratio']*100 : '',
+        $hasmult ? htmlspecialchars($details['grade']['.mult']['comments']) : ''
+    );
+    
+    $hassub = array_key_exists('grade', $details) && array_key_exists('.sub',$details['grade']);
+    $sub = percent_tag(
+        "$id|sub", 
+        "grade subtraction",
+        $hassub ? $details['grade']['.sub']['portion']*100 : '',
+        $hassub ? htmlspecialchars($details['grade']['.sub']['comments']) : ''
+    );
+    return "
+        $sub
+        $mult
+    ";
+
 function percent_tree($details) {
     if (!array_key_exists('grade', $details) && array_key_exists('grade_template', $details)) {
 	$details['grade'] = $details['grade_template'];
@@ -213,30 +234,44 @@ function percent_tree($details) {
     $ratio = array_key_exists('grade', $details) ? $details['grade']['ratio']*100 : '';
     $comment = array_key_exists('grade', $details) ? htmlspecialchars($details['grade']['comments']) : '';
     $innertag = percent_tag($id, $text, $ratio, $comment);
-    $hasmult = array_key_exists('grade', $details) && array_key_exists('.mult',$details['grade']);
-    $mult = percent_tag(
-        "$id|mult", 
-        "grade multiplier (e.g., for hard-coding, other prohibited activity)",
-        $hasmult ? $details['grade']['.mult']['ratio']*100 : '',
-        $hasmult ? (isset($details['grade']['.mult']['comments']) ?
-            htmlspecialchars($details['grade']['.mult']['comments']) :
-            htmlspecialchars($details['grade']['.mult']['comment'])
-        ) : ''
-    );
-    $hassub = array_key_exists('grade', $details) && array_key_exists('.sub',$details['grade']);
-    $sub = percent_tag(
-        "$id|sub", 
-        "grade subtraction",
-        $hassub ? $details['grade']['.sub']['portion']*100 : '',
-        $hassub ? htmlspecialchars($details['grade']['.sub']['comments']) : ''
-    );
+    $adjust_section = get_adjust_section($id, $details);
     return "
         <div class='percentage-outer' id='$id|outer'>
             $innertag
-            $sub
-            $mult
+            $adjust_section
         </div>
     ";
+}
+
+
+function rubric_tree($details) {
+    foreach($details['rubric']['items'] as $i=>$item) {
+        $sometimes_na = False;
+        $prompt_points = False;
+        if (!is_array($item)) {
+            $item = array('name' => $item, 'key' => $item, 'weight' => 1.0, 'type' => 'radio');
+        }
+        if (!array_key_exists('key', $item)) {
+            $item['key'] = $item['name'];
+        }
+        if (array_key_exists('grade', $details)
+        && array_key_exists('human', $details['grade'])
+        && array_key_exists($i, $details['grade']['items'])
+       	&& ($details['grade']['items'][$i]['key'] == $item['key'])
+        ) {
+	    $select = $details['grade']['items'][$i]['ratio'];
+	    $weight = $details['grade']['items'][$i]['weight'];
+            $comment = $details['grade']['items'][$i]['comment'];
+            if (strlen($comment) == 0 && array_key_exists('comments', $details['grade']['tiems'][$i])) {
+                $comment = $details['grade']['items'][$i]['comments'];
+            }
+	} else {
+            $select = False;
+            $weight = $item['weight'];
+            $comment = '';
+        }
+        $items[] =  item_tag("$id|$i", $item, $select, $weight, $comment);
+    }
 }
 
 function hybrid_tree($details) {
@@ -287,22 +322,8 @@ function hybrid_tree($details) {
         $items[] =  item_tag("$id|$i", $item, $select, $weight, $comment);
     }
     $items = implode("\n            ", $items);
+    $adjust_section = get_adjust_section($id, $details);
     
-    $hasmult = array_key_exists('grade', $details) && array_key_exists('.mult',$details['grade']);
-    $mult = percent_tag(
-        "$id|mult", 
-        "grade multiplier (e.g., for hard-coding, other prohibited activity)",
-        $hasmult ? $details['grade']['.mult']['ratio']*100 : '',
-        $hasmult ? htmlspecialchars($details['grade']['.mult']['comments']) : ''
-    );
-    
-    $hassub = array_key_exists('grade', $details) && array_key_exists('.sub',$details['grade']);
-    $sub = percent_tag(
-        "$id|sub", 
-        "grade subtraction",
-        $hassub ? $details['grade']['.sub']['portion']*100 : '',
-        $hassub ? htmlspecialchars($details['grade']['.sub']['comments']) : ''
-    );
     $comment = (array_key_exists('grade', $details) && array_key_exists('comments', $details['grade'])) ? htmlspecialchars($details['grade']['comments']) : '';
     
     // FIXME: there is currently no way to handle .adjustment files from this interface
@@ -314,12 +335,9 @@ function hybrid_tree($details) {
             $items
         </div>
         <div class='comment'><span>Comment:</span><textarea id='$id|comment'>$comment</textarea></div>
-        <div class='hide-outer hidden'><strong class='hide-header'>Multiplier (for special cases)</strong><div class='hide-inner'>
-        $mult
-        </div></div>
-        <div class='hide-outer hidden'><strong class='hide-header'>Subtraction (for special cases)</strong><div class='hide-inner'>
-        $sub
-        </div></div>
+        <div class='hide-outer hidden'>
+        $adjust_section
+        </div>
     </div>";
 }
 
@@ -327,7 +345,7 @@ function hybrid_tree($details) {
 function grading_tree($details) {
     if ($details['rubric']['kind'] == 'hybrid') return hybrid_tree($details);
     if ($details['rubric']['kind'] == 'percentage') return percent_tree($details);
-    if ($details['rubric']['kind'] == 'percent') return percent_tree($details);
+    if ($details['rubric']['kind'] == 'rubric') return rubric_tree($details);
     return "<div class='big error'><h1>Error!</h1>Unsupported rubric kind: $details[rubric][kind]</div>";
 }
 
