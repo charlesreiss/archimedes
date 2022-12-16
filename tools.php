@@ -1127,6 +1127,7 @@ function score_of_task($details) {
             }
         }
         $score = $rubric*1.0/$rubric_denom;
+    }
 
     if (array_key_exists('.mult', $gradeobj) && $score > 0.0) {
         // (with multiplier)
