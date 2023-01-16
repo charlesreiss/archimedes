@@ -733,6 +733,9 @@ function asgn_details($student, $slug) {
         $details['excused'] = TRUE;
         $details['weight'] = 0;
     }
+    if (file_exists("uploads/$slug/$student/.checkoff")) {
+        $details['checkoff'] = json_decode(file_get_contents("uploads/$slug/$student/.checkoff"));
+    }
     if ((!array_key_exists('withhold',$details) || $isstaff) && file_exists("uploads/$slug/$student/.grade"))
         $details['grade'] = json_decode(file_get_contents("uploads/$slug/$student/.grade"), TRUE);
     if (file_exists("uploads/$slug/$student/.gradetemplate"))
