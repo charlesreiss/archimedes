@@ -204,8 +204,8 @@ function item_tag($id, $rubric, $selected, $weight, $comment) {
     }
 }
 
-function get_adjust_section($details) $id, {
-    $hasmult = array_key_exists('grade', $details) && array_key_exists('.mult',$details['grade']);
+function get_adjust_section($id, $details) {
+    $hasmult = array_key_exists('grade', $details) && array_key_exists('.mult', $details['grade']);
     $mult = percent_tag(
         "$id|mult", 
         "grade multiplier (e.g., for hard-coding, other prohibited activity)",
@@ -224,6 +224,7 @@ function get_adjust_section($details) $id, {
         $sub
         $mult
     ";
+}
 
 function percent_tree($details) {
     if (!array_key_exists('grade', $details) && array_key_exists('grade_template', $details)) {
