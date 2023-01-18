@@ -163,9 +163,24 @@ function maybeNewCheckoff() {
 	newCheckoff();
     }
 }
+</script>
 <?php
-if (array_key_exists('slug', $_GET)) {
-    $slug = $_GET['slug'];
+if (!array_key_exists('slug', $_GET)) {
+?>
+Assignments available for checkoff:
+<ul>
+<?php
+foreach (assignments(true) as $slug=>$details) {
+    if (array_key_exists('allow-checkoff', $details) && $details['allow-checkoff']) {
+        echo('<li><a href="checkoff.php?slug='.$slug.'">'.$slug.'</a></li>');
+    }
+}
+?>
+<?php
+} else {
+$slug = $_GET['slug'];
+if (!assignments(true)[$slug]['allow-checkoff']) {
+    die("Checkoffs not enabled for this assignment");
 }
 $student_data= "<datalist id='students-list'>";
 $found_checkoffs = array();
@@ -182,6 +197,7 @@ foreach(fullRoster() as $compid=>$details) {
 }
 $student_data.= "</datalist>";
 ?>
+<script>
 function setup() {
 <?php
     foreach ($found_checkoffs as $checkoff) {
@@ -201,3 +217,6 @@ function setup() {
 <tr class="header"><th scope='col'>computing ID</th><th scope='col'>score (out of 1)</th><th scope='col'>comments</th><th scope='col'>submit</th></tr>
 </thead>
 </table>
+<?php
+}
+?>
