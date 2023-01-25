@@ -559,7 +559,7 @@ if ($submitted) {
     } else {
         echo "Your files (<a href='view.php?file=$slug/$user$ext'>view all</a>) (<a href='download.php?file=$slug/$user$ext'>download all as .zip</a>):<ul class='filelist'>";
         foreach($details['.files'] as $name=>$path) {
-            if (array_key_exists($name, $details['.feedback-files'])) {
+            if (array_key_exists('.feedback-files', $details) && !array_key_exists($name, $details['.feedback-files'])) {
                 continue;
             }
             echo "<li>";
