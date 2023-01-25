@@ -185,8 +185,8 @@ if (!assignments(true)[$slug]['allow-checkoff']) {
 $student_data= "<datalist id='students-list'>";
 $found_checkoffs = array();
 foreach(fullRoster() as $compid=>$details) {
-    if (array_key_exists('role', $details) && $details['role'] == 'Admin') continue;
-    if (!array_key_exists('role', $details) || $details['role'] != 'Student') continue;
+    #if (array_key_exists('role', $details) && $details['role'] == 'Admin') continue;
+    #if (!array_key_exists('role', $details) || $details['role'] != 'Student') continue;
     $student_data .= "<option value='$compid'>$details[name] ($compid)</option>";
     if (file_exists("uploads/$slug/$compid/.checkoff")) {
 	$checkoff = json_decode(file_get_contents("uploads/$slug/$compid/.checkoff"), JSON_OBJECT_AS_ARRAY);
