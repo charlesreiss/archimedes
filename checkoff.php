@@ -22,7 +22,7 @@ if (array_key_exists('checkoff', $_REQUEST)) {
         ));
     }
 
-    $reqfile = "meta/requests/queued/$grade[slug]-$grade[student]";
+    $reqfile = "meta/queued/$grade[slug]-$grade[student]";
 
     $payload = json_encode($grade); 
     if (!file_put("uploads/$grade[slug]/$grade[student]/.checkoff", $payload))
