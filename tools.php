@@ -756,7 +756,7 @@ function asgn_details($student, $slug) {
     } else if (closeTime($details) < time()) {
         $details['autograde'] = $nopoints;
     }
-    
+   
     if (!array_key_exists('weight', $details)) $details['weight'] = 1;
     
     // add list of submissions and last-not-late autograde
@@ -907,7 +907,20 @@ function asgn_details($student, $slug) {
         if ($last) $details['autograde']['created'] = $last;
     }
     
-
+    $details['grade-visible'] = true;
+    $now = date_format(date_create(), "Ymd-His");
+    if (array_key_exists('withhold', $details) && $details['withhold']) {
+        $details['grade-visible'] = false;
+    } else if (array_key_exists('.ext-req', $details)) {
+        $details['grade-visible'] = false;
+    } else if (
+        array_key_exists('hide_grade_before_due', $details) &&
+        (assignmentTime('due', $details) < $now) && 
+        !($isstaff && $isself)
+    ) {
+        $details['grade-visible'] = false;
+    }
+    
     return $details;
 }
 

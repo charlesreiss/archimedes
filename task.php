@@ -251,6 +251,7 @@ function show_grade($gradeobj) {
     if (!$gradeobj || !array_key_exists('kind', $gradeobj))
         return "<div class='xp-missed'>It appears the grade data on the server is malformed. Please visit Piazza, search to see if someone else has already reported this, and if not make an open question there identifying the task for which this message appeared.</div>";
     $ans = array();
+    $any_null = false;
     if ($gradeobj['kind'] == 'percentage') {
 	$ans[] = '<table class="feedback"><tbody>';
 	$score = $gradeobj['ratio'];
@@ -277,6 +278,9 @@ function show_grade($gradeobj) {
 	    $r = $entry['ratio'];
             if ($entry['weight'] == 0.0 && (array_key_exists('sometimes_na', $entry))) {
                 continue;
+            }
+            if ($entry['weight'] > 0.0 && is_null($r)) {
+                $any_null = true;
             }
 	    $human += $entry['weight'] * $r;
 	    $human_denom += $entry['weight'];
@@ -335,6 +339,9 @@ function show_grade($gradeobj) {
         _show_grade_obj_row($ans, $gradeobj['.adjustment']['mult'], $gradeobj['.adjustment']['comments'], true, '× ');
         $score *= $gradeobj['.adjustment']['mult'];
     }
+    if ($any_null) {
+        $score = null;
+    }
     _show_grade_obj_row($ans, $score, 'Overall score', true);
     
     $ans[] = '</tbody></table>';
@@ -343,21 +350,28 @@ function show_grade($gradeobj) {
 
 function _show_grade_obj_points(&$ans, $ratio, $weight, $comment) {
     $ans[] = '<tr>';
-    $ans[] = '<td class="';
-    $ans[] = (($ratio >= 1) ? 'full' : ($ratio > 0 ? 'partial' : 'no'));
-    $ans[] = ' credit"';
-    $ans[] = '>';
-    $points = round($ratio * $weight, 1);
-    $of_points = round($weight, 1);
-    $ans[] = "$points / $of_points";
-    $ans[] = '</td>';
+    if (!is_null($ratio)) {
+        $ans[] = '<td class="';
+        $ans[] = (($ratio >= 1) ? 'full' : ($ratio > 0 ? 'partial' : 'no'));
+        $ans[] = ' credit"';
+        $ans[] = '>';
+        $points = round($ratio * $weight, 1);
+        $of_points = round($weight, 1);
+        $ans[] = "$points / $of_points";
+        $ans[] = '</td>';
+    } else {
+        $ans[] = '<td class="unknown credit">???</td>';
+    }
     $ans[] = '<td style="white-space: pre-wrap">';
     $ans[] = htmlspecialchars($comment);
     $ans[] = '</td></tr>';
 }
 function _show_grade_obj_row(&$ans, $ratio, $comment, $percent=False, $prefix='', $include_portion=True) {
     $ans[] = '<tr>';
-    if ($ratio !== FALSE) {
+    if (is_null($ratio)) {
+        $ans[] = '<td class="unknown credit">???</td>';
+	$ans[] = '<td style="white-space: pre-wrap">';
+    } else if ($ratio !== FALSE) {
 	$ans[] = '<td class="';
 	$ans[] = (($ratio >= 1) ? 'full' : ($ratio > 0 ? 'partial' : 'no'));
 	$ans[] = ' credit"';
@@ -393,7 +407,11 @@ function _show_grade_obj_row(&$ans, $ratio, $comment, $percent=False, $prefix=''
 function grader_fb($details) {
     global $metadata;
     echo "<div class='hide-outer'><strong class='hide-header'>$metadata[grader] feedback</strong><div class='hide-inner'>";
-    echo show_grade($details['grade']);
+    if (!array_key_exists('grade', $details)) {
+        echo show_grade($details['grade_template']);
+    } else {
+        echo show_grade($details['grade']);
+    }
     echo '</div></div>';
 }
 function testcase_fb($details) {
@@ -587,10 +605,9 @@ echo '</div>';
 
 
 // display feedback
-if ((!array_key_exists('hide_grade_before_due', $details) || (($due < $now) || ($isstaff && $isself)))
-&& array_key_exists('grade', $details)
-&& !array_key_exists('.ext-req', $details)
-&& !array_key_exists('withhold', $details)) {
+if ($details['grade-visible'] && (
+        array_key_exists('grade', $details) || array_key_exists('grade_template', $details)
+    )) {
     grader_fb($details);
 } else if (array_key_exists('.files', $details)) {
     if (($due < $now)
