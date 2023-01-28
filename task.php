@@ -145,6 +145,7 @@ function accept_submission() {
         }
         
         if (file_exists($linkdir . '.grade')) unlink($linkdir . '.grade');
+        if (file_exists($linkdir . '.gradetemplate')) unlink($linkdir . '.gradetemplate');
         if (file_exists($linkdir . '.autofeedback')) unlink($linkdir . '.autofeedback');
         if (file_exists($linkdir . '.latefeedback')) unlink($linkdir . '.latefeedback');
         if (file_exists($linkdir . '.autograde')) unlink($linkdir . '.autograde');
