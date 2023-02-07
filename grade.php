@@ -42,6 +42,7 @@ if (array_key_exists('addgrade', $_REQUEST) || array_key_exists('respondtoregrad
     }
     if (array_key_exists('addgrade', $_REQUEST)) {
         $details = asgn_details($grade['student'], $grade['slug']);
+        $is_incomplete = FALSE;
         # preserve hidden information
         if (array_key_exists('grade', $details)) {
             foreach ($details['grade'] as $k => $v) {
@@ -89,20 +90,35 @@ if (array_key_exists('addgrade', $_REQUEST) || array_key_exists('respondtoregrad
                 if (array_key_exists('key', $val)) {
                     $grade['human'][$i]['key'] = $val['key'];
                 }
+                if (!array_key_exists('ratio', $val) || is_null($val['ratio'])) {
+                    $is_incomplete = TRUE;
+                }
             }
         }
         
         // post to uploads/assignment/.gradelog and uploads/assignment/student/.grade
         $payload = json_encode($grade);
-        file_put("uploads/$grade[slug]/$grade[student]/.grade", $payload)  || die('failed to record grade (may be server permission error?)');
-        file_append("users/.graded/$user/$grade[slug]", "$grade[student]\n");
-        if (file_exists("uploads/$grade[slug]/$grade[student]/.partners")) {
-            foreach(explode("\n",file_get_contents("uploads/$grade[slug]/$grade[student]/.partners")) as $pair) {
-                file_put("uploads/$grade[slug]/$pair/.grade", $payload);
-                file_append("users/.graded/$user/$grade[slug]", "$pair\n");
+        if (!$is_incomplete) {
+            file_put("uploads/$grade[slug]/$grade[student]/.grade", $payload)  || die('failed to record grade (may be server permission error?)');
+            file_append("users/.graded/$user/$grade[slug]", "$grade[student]\n");
+            if (file_exists("uploads/$grade[slug]/$grade[student]/.partners")) {
+                foreach(explode("\n",file_get_contents("uploads/$grade[slug]/$grade[student]/.partners")) as $pair) {
+                    file_put("uploads/$grade[slug]/$pair/.grade", $payload);
+                    file_append("users/.graded/$user/$grade[slug]", "$pair\n");
+                }
             }
+            file_append("uploads/$grade[slug]/.gradelog", "$payload\n");
+        } else {
+            file_put("uploads/$grade[slug]/$grade[student]/.gradetemplate", $payload)  || die('failed to record grade (may be server permission error?)');
+            file_append("users/.graded/$user/$grade[slug]", "$grade[student]\n");
+            if (file_exists("uploads/$grade[slug]/$grade[student]/.partners")) {
+                foreach(explode("\n",file_get_contents("uploads/$grade[slug]/$grade[student]/.partners")) as $pair) {
+                    file_put("uploads/$grade[slug]/$pair/.gradetemplate", $payload);
+                    file_append("users/.graded/$user/$grade[slug]", "$pair\n");
+                }
+            }
+            file_append("uploads/$grade[slug]/.gradetemplatelog", "$payload\n");
         }
-        file_append("uploads/$grade[slug]/.gradelog", "$payload\n");
     }
 
     // inform invoking method of success
@@ -166,7 +182,7 @@ function item_tag($id, $rubric, $selected, $weight, $comment) {
         }
         $sometimes_na = array_key_exists('sometimes_na', $rubric) && $rubric['sometimes_na'];
         foreach ($options as $option) {
-            $cur_selected = ($selected == $option[0]) && ($selected !== False);
+            $cur_selected = (($selected == $option[0]) && ($selected !== False));
             if ($cur_selected) {
                 $checked = "checked='checked' ";
             } else {
@@ -261,6 +277,9 @@ function rubric_tree($details) {
        	&& ($details['grade']['items'][$i]['key'] == $item['key'])
         ) {
 	    $select = $details['grade']['items'][$i]['ratio'];
+            if (is_null($select)) {
+                $select = False;
+            }
 	    $weight = $details['grade']['items'][$i]['weight'];
             $comment = $details['grade']['items'][$i]['comment'];
             if (strlen($comment) == 0 && array_key_exists('comments', $details['grade']['tiems'][$i])) {
@@ -310,6 +329,9 @@ function hybrid_tree($details) {
        	&& ($details['grade']['human'][$i]['key'] == $item['key'] || $details['grade']['human'][$i]['name'] == $item['name'])
 	) {
 	    $select = $details['grade']['human'][$i]['ratio'];
+            if (is_null($select)) {
+                $select = False;
+            }
 	    $weight = $details['grade']['human'][$i]['weight'];
             $comment = $details['grade']['human'][$i]['comment'];
             if (strlen($comment) == 0 && array_key_exists('comments', $details['grade']['human'][$i])) {
