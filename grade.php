@@ -620,7 +620,7 @@ function _grade(id) {
             num = Number(num[num.length-1]);
             while (num >= ans.human.length) ans.human.push(null);
             if (ans.human[num] == null) {
-                ans.human[num] = {name: name, weight: 0}
+                ans.human[num] = {name: name}
             }
             ans.human[num]['comment'] = x.value;
             x.parentElement.parentElement.classList.remove('error');
