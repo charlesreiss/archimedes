@@ -166,7 +166,7 @@ function item_tag($id, $rubric, $selected, $weight, $comment) {
         }
         $sometimes_na = array_key_exists('sometimes_na', $rubric) && $rubric['sometimes_na'];
         foreach ($options as $option) {
-            $cur_selected = ($selected == $option[0]);
+            $cur_selected = ($selected == $option[0]) && ($selected !== False);
             if ($cur_selected) {
                 $checked = "checked='checked' ";
             } else {
