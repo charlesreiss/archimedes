@@ -361,7 +361,7 @@ function _show_grade_obj_points(&$ans, $ratio, $weight, $comment) {
         $ans[] = "$points / $of_points";
         $ans[] = '</td>';
     } else {
-        $ans[] = '<td class="unknown credit">???</td>';
+        $ans[] = '<td class="unknown credit">not yet graded</td>';
     }
     $ans[] = '<td style="white-space: pre-wrap">';
     $ans[] = htmlspecialchars($comment);
