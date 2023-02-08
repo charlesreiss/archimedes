@@ -370,7 +370,7 @@ function _show_grade_obj_points(&$ans, $ratio, $weight, $comment) {
 function _show_grade_obj_row(&$ans, $ratio, $comment, $percent=False, $prefix='', $include_portion=True) {
     $ans[] = '<tr>';
     if (is_null($ratio)) {
-        $ans[] = '<td class="unknown credit">???</td>';
+        $ans[] = '<td class="unknown credit">not yet graded</td>';
 	$ans[] = '<td style="white-space: pre-wrap">';
     } else if ($ratio !== FALSE) {
 	$ans[] = '<td class="';
