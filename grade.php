@@ -109,13 +109,28 @@ if (array_key_exists('addgrade', $_REQUEST) || array_key_exists('respondtoregrad
                 }
             }
             file_append("uploads/$grade[slug]/.gradelog", "$payload\n");
+            # FIXME: move logic to tools.php
+            if (file_exists("uploads/$grade[slug]/$grade[student]/.gradetemplate")) {
+                unlink("uploads/$grade[slug]/$grade[student]/.gradetemplate");
+            }
         } else {
             file_put("uploads/$grade[slug]/$grade[student]/.gradetemplate", $payload)  || die('failed to record grade (may be server permission error?)');
+            # FIXME: move logic to tools.php
+            if (file_exists("uploads/$grade[slug]/$grade[student]/.grade")) {
+                $stamp = date_format(date_create(), "Ymd-His");
+                rename("uploads/$grade[slug]/$grade[student]/.grade",
+                       "uploads/$grade[slug]/$grade[student]/.backup-$stamp-grade");
+            }
             file_append("users/.graded/$user/$grade[slug]", "$grade[student]\n");
             if (file_exists("uploads/$grade[slug]/$grade[student]/.partners")) {
                 foreach(explode("\n",file_get_contents("uploads/$grade[slug]/$grade[student]/.partners")) as $pair) {
                     file_put("uploads/$grade[slug]/$pair/.gradetemplate", $payload);
                     file_append("users/.graded/$user/$grade[slug]", "$pair\n");
+                    if (file_exists("uploads/$grade[slug]/$pair/.grade")) {
+                        $stamp = date_format(date_create(), "Ymd-His");
+                        rename("uploads/$grade[slug]/$pair/.grade",
+                               "uploads/$grade[slug]/$pair/.backup-$stamp-grade");
+                    }
                 }
             }
             file_append("uploads/$grade[slug]/.gradetemplatelog", "$payload\n");
