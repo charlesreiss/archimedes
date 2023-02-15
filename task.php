@@ -401,6 +401,7 @@ function show_grade($gradeobj) {
 }
 
 function _show_grade_obj_points(&$ans, $ratio, $weight, $comment) {
+    global $is_template;
     $ans[] = '<tr>';
     if (!is_null($ratio)) {
         $ans[] = '<td class="';
@@ -412,7 +413,11 @@ function _show_grade_obj_points(&$ans, $ratio, $weight, $comment) {
         $ans[] = "$points / $of_points";
         $ans[] = '</td>';
     } else {
-        $ans[] = '<td class="unknown credit">not yet graded</td>';
+        if ($is_template) {
+            $ans[] = '<td class="unknown credit">not yet graded</td>';
+        } else {
+            $ans[] = '<td class="unknown credit">not fully checked</td>';
+        }
     }
     $ans[] = '<td style="white-space: pre-wrap">';
     $ans[] = htmlspecialchars($comment);
@@ -457,9 +462,10 @@ function _show_grade_obj_row(&$ans, $ratio, $comment, $percent=False, $prefix=''
 
 
 function grader_fb($details) {
-    global $metadata;
+    global $metadata, $is_template;
     echo "<div class='hide-outer'><strong class='hide-header'>$metadata[grader] feedback</strong><div class='hide-inner'>";
     if (!array_key_exists('grade', $details)) {
+        $is_template = true;
         echo show_grade($details['grade_template']);
     } else {
         echo show_grade($details['grade']);

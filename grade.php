@@ -92,7 +92,10 @@ if (array_key_exists('addgrade', $_REQUEST) || array_key_exists('respondtoregrad
                 }
                 if (!array_key_exists('ratio', $grade['human'][$i]) || 
                     is_null($grade['human'][$i]['ratio'])) {
-                    $is_incomplete = TRUE;
+                    if ($grade['human'][$i]['weight'] == 0) {
+                    } else {
+                        $is_incomplete = TRUE;
+                    }
                 }
             }
         }
