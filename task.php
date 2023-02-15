@@ -25,6 +25,7 @@ if (array_key_exists('delete', $plain_str)) { unset($plain_str['delete']); }
 $plain_str = http_build_query($plain_str);
 $ext = "&$plain_str";
 $end = "?$plain_str";
+$is_template = false;
 
 
 // get times
@@ -424,9 +425,14 @@ function _show_grade_obj_points(&$ans, $ratio, $weight, $comment) {
     $ans[] = '</td></tr>';
 }
 function _show_grade_obj_row(&$ans, $ratio, $comment, $percent=False, $prefix='', $include_portion=True) {
+    global $is_template;
     $ans[] = '<tr>';
     if (is_null($ratio)) {
-        $ans[] = '<td class="unknown credit">not yet graded</td>';
+        if ($is_template) {
+            $ans[] = '<td class="unknown credit">not yet graded</td>';
+        } else {
+            $ans[] = '<td class="unknown credit">not fully checked</td>';
+        }
 	$ans[] = '<td style="white-space: pre-wrap">';
     } else if ($ratio !== FALSE) {
 	$ans[] = '<td class="';
