@@ -23,6 +23,22 @@ $superusers = array(
     'mst3k'=>array('name'=>'Mystery Theater', 'role'=>'Student', 'grader'=>'no TA'),
 );
 
+function compute_csrf_token() {
+    global $metadata;
+    return hash("sha256", $metadata['csrf_key'] . $metadata['title'] . $user);
+}
+
+function csrf_token_html() {
+    $token = compute_csrf_token();
+    return "<input type='hidden' name='csrf_token' value='$token'>";
+}
+
+function check_csrf_token() {
+    if ($_REQUEST['csrf_token'] != compute_csrf_token()) {
+        die("CSRF token mismatch");
+    }
+}
+
 $inPre = False;
 $noPre = False;
 function preFeedback($msg) {

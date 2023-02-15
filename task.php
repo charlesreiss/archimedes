@@ -21,15 +21,45 @@ $details = asgn_details($user, $slug);
 
 $plain_str = $_GET;
 if (array_key_exists('submitted', $plain_str)) { unset($plain_str['submitted']); }
+if (array_key_exists('delete', $plain_str)) { unset($plain_str['delete']); }
 $plain_str = http_build_query($plain_str);
 $ext = "&$plain_str";
 $end = "?$plain_str";
 
 
+// get times
+$now = time();
+$due = assignmentTime('due', $details);
+$close = closeTime($details);
+$open = assignmentTime('open', $details);
+
+// meta-properties
+$submitted = array_key_exists('.files', $details);
+$submittable = (($open < $now && $close > $now) || hasStaffRole($me)) && array_key_exists('files', $details);
+$show_cases =  $due < $now 
+    && $submitted
+    && !array_key_exists('.ext-req', $details);
+$extendable = ($now < $due || !$submitted) 
+    && array_key_exists('files', $details) 
+    && !(array_key_exists('no-extension', $metadata) && array_key_exists($details['group'], $metadata['no-extension']));
+
+$regradable = TRUE;
+if (array_key_exists('no-regrade', $metadata) && array_key_exists($details['group'], $metadata['no-regrade']))
+    $regradable = $metadata['no-regrade'][$details['group']];
+
+// time category
+$status = ($now < $open) ? 'is not yet open' 
+        :( ($now < $due) ? 'is due ' . prettyTime($due)
+        :( ($now < $close) ? 'was due '.prettyTime($due)
+        :( 'has closed')));
+// time category css class
+$class = ((!$due || $open > $now) ? "pending" : ($due > $now ? "open" : ($close > $now ? "late" : "closed")));
+
 
 function accept_submission() {
     global $user, $details, $slug, $metadata, $isstaff, $isself;
     if (!array_key_exists('submission', $_FILES)) return;
+    #FIXME: check_csrf_token();
     if (count($_FILES['submission']['error']) == 1 && $_FILES['submission']['error'] == UPLOAD_ERR_NO_FILE) {
         user_error_msg("Upload action received, but no file was sent by your browser. Please try again.");
         return;
@@ -241,6 +271,24 @@ if (!accept_submission() && array_key_exists('submitted', $_GET) && $_GET['submi
 }
 accept_extension();
 roll_back();
+if ($submittable && isset($_GET['delete']) && isset($_POST['delete_name'])) {
+    check_csrf_token();
+    if (array_key_exists('.files', $details) &&
+        array_key_exists($_POST['delete_name'], $details['.files'])) {
+        if (array_key_exists('.feedback-files', $details) &&
+            array_key_exists($_POST['delete_name'], $details['.feedback-files'])) {
+            user_error_msg("Cannot delete feedback file from this interface");
+        } else {
+            $linkdir = "uploads/$slug/$user/";
+            unlink("$linkdir/" . $_POST['delete_name']);
+            user_success_msg("Deleted $_POST[delete_name]");
+        }
+    } else {
+        user_error_msg("Could not delete <tt>$_POST[delete_name]</tt> &mdash; not found");
+    }
+    echo "<p>Return to <a href='task.php$end'>this assignment's submission page</a> or the <a href='index.php$end'>assignments list</a> or the <a href='$metadata[url]'>main course page</a>.</p>";
+    die('</body></html>');
+}
 
 if (array_key_exists('submitted', $_GET) && $_GET['submitted']) {
     echo "<p>Return to <a href='task.php$end'>this assignment's submission page</a> or the <a href='index.php$end'>assignments list</a> or the <a href='$metadata[url]'>main course page</a>.</p>";
@@ -469,34 +517,6 @@ function preliminary_fb($details) {
 
 
 
-// get times
-$now = time();
-$due = assignmentTime('due', $details);
-$close = closeTime($details);
-$open = assignmentTime('open', $details);
-
-// meta-properties
-$submitted = array_key_exists('.files', $details);
-$submittable = (($open < $now && $close > $now) || hasStaffRole($me)) && array_key_exists('files', $details);
-$show_cases =  $due < $now 
-    && $submitted
-    && !array_key_exists('.ext-req', $details);
-$extendable = ($now < $due || !$submitted) 
-    && array_key_exists('files', $details) 
-    && !(array_key_exists('no-extension', $metadata) && array_key_exists($details['group'], $metadata['no-extension']));
-
-$regradable = TRUE;
-if (array_key_exists('no-regrade', $metadata) && array_key_exists($details['group'], $metadata['no-regrade']))
-    $regradable = $metadata['no-regrade'][$details['group']];
-
-// time category
-$status = ($now < $open) ? 'is not yet open' 
-        :( ($now < $due) ? 'is due ' . prettyTime($due)
-        :( ($now < $close) ? 'was due '.prettyTime($due)
-        :( 'has closed')));
-// time category css class
-$class = ((!$due || $open > $now) ? "pending" : ($due > $now ? "open" : ($close > $now ? "late" : "closed")));
-
 
 // display basic information
 echo "<h1>$slug – ";
@@ -582,7 +602,15 @@ if ($submitted) {
                 continue;
             }
             echo "<li>";
-            echo file_download_link($name, $path);
+            echo file_download_link($name, $path) . " " .file_view_link($name,$path);
+            if ($submittable) {
+                echo " <form style='display:inline' action='$_SERVER[SCRIPT_NAME]?delete=1$ext' method='post'>";
+                echo "   <input type='hidden' name='slug' value='$slug'>";
+                echo "   <input type='hidden' name='delete_name' value='$name'>";
+                echo "   <input type='submit' value='delete this file'>";
+                echo csrf_token_html();
+                echo " </form>";
+            }
             echo "</li>";
         }
         echo '</ul>';
@@ -660,7 +688,9 @@ if ($submittable || $isstaff) {
 	    echo ", though it is now late (see the course syllabus for what that means)";
 	}
     }
-    echo ":</p><center><input type='file' multiple='multiple' name='submission[]'/><input type='submit' name='upload' value='Upload file(s)'/></center></form>";
+    echo ":</p>";
+    #echo csrf_token_html();
+    echo "<center><input type='file' multiple='multiple' name='submission[]'/><input type='submit' name='upload' value='Upload file(s)'/></center></form>";
 }
 
 
