@@ -281,6 +281,9 @@ if ($submittable && isset($_GET['delete']) && isset($_POST['delete_name'])) {
         } else {
             $linkdir = "uploads/$slug/$user/";
             unlink("$linkdir/" . $_POST['delete_name']);
+            if (file_exists("$linkdir/.grade")) unlink("$linkdir/.grade");
+            if (file_exists("$linkdir/.gradetemplate")) unlink("$linkdir/.gradetemplate");
+            ensure_file("meta/queued/$slug-$user", basename($dname));
             user_success_msg("Deleted $_POST[delete_name]");
         }
     } else {
