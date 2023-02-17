@@ -654,7 +654,7 @@ if ($details['grade-visible'] && (
     )) {
     if (array_key_exists('grade_describe_html', $details)) {
         $html = $details['grade_describe_html'];
-        echo "<p>$html</p>";
+        echo "<blockquote>$html</blockquote>";
     }
     grader_fb($details);
 } else if (array_key_exists('.files', $details)) {
