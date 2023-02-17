@@ -652,6 +652,10 @@ echo '</div>';
 if ($details['grade-visible'] && (
         array_key_exists('grade', $details) || array_key_exists('grade_template', $details)
     )) {
+    if (array_key_exists('grade_describe_html', $details)) {
+        $html = $details['grade_describe_html'];
+        echo "<p>$html</p>";
+    }
     grader_fb($details);
 } else if (array_key_exists('.files', $details)) {
     if (($due < $now)
