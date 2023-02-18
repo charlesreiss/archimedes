@@ -255,6 +255,7 @@ function roll_back() {
             if (file_exists("$dname/.autofeedback")) unlink("$dname/.autofeedback");
             if (file_exists("$dname/.autograde")) unlink("$dname/.autograde");
             if (file_exists("$dname/.grade")) unlink("$dname/.grade");
+            if (file_exists("$dname/.gradetemplate")) unlink("$dname/.gradetemplate");
             link($_POST['make_live'], "$dname/$fname");
             $stamp = substr(basename(dirname($_POST['make_live'])), 1);
             file_put("$dname/.latest", $fname . "\n" .$stamp);
