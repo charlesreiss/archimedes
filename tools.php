@@ -356,6 +356,7 @@ function updateRosterSpreadsheet($uploadrecord, $remove=False, $keepWaiters=True
 function hasFacultyRole($me) {
     return array_key_exists('role', $me) && (
         $me['role'] == 'Instructor'
+        || $me['role'] == 'Secondary Instructor'
         || $me['role'] == 'Professor'
         || $me['role'] == 'Teacher'
         || $me['role'] == 'Admin'
