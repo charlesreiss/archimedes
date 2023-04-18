@@ -194,7 +194,17 @@ function item_tag($id, $rubric, $selected, $weight, $comment) {
         #}
         return $result;
     } else {
-        $result = "<div class='item'>";
+        $incomplete_p = $selected === False;
+        if ($incomplete_p) {
+            if ($weight == 0.0) {
+                $incomplete_class = "incomplete-optional";
+            } else {
+                $incomplete_class = "incomplete-mandatory";
+            }
+        } else {
+            $incomplete_class = "";
+        }
+        $result = "<div class='item ". $incomplete_class ."'>";
         $options = [[1.0, "1"], [0.75, "¾"], [0.5, "½"], [0.25, "¼"], [0.0, "0"]];
         if ($type == "radio3") {
             $options = [[1.0, "1"], [0.5, "½"], [0.0, "0"]];
@@ -388,7 +398,7 @@ function grading_tree($details) {
     if ($details['rubric']['kind'] == 'hybrid') return hybrid_tree($details);
     if ($details['rubric']['kind'] == 'percentage') return percent_tree($details);
     if ($details['rubric']['kind'] == 'rubric') return rubric_tree($details);
-    return "<div class='big error'><h1>Error!</h1>Unsupported rubric kind: $details[rubric][kind]</div>";
+    return "<div class='big error'><h1>Error!</h1>Unsupported rubric kind: ".$details['rubric']['kind']."</div>";
 }
 
 function student_screen($slug, $student, $nof='') {
@@ -532,6 +542,9 @@ input + input { margin-left:0.5ex; }
 
         table.table-columns.done, table.table-columns:not(.done) + table.table-columns, table.table-columns:not(.done) + #grading-footer { display:none; }
 
+.incomplete-mandatory { background-color: rgb(230, 230, 255); }
+.incomplete-optional { font-style: italic; }
+
     </style>
     <script src="dates_collapse.js"></script>
     <script type="text/javascript" src="codebox_<?=array_key_exists("code-lang",$metadata)?$metadata["code-lang"]:"py"?>.js"></script>
@@ -582,7 +595,7 @@ function _grade(id) {
         if (val < 0 || val > 0 && val <= 1)
         { element.classList.add('error'); throw new Error('Invalid percentage'); }
         
-        if (com.length < 4)
+        if (com.length < 0)
         { element.classList.add('error'); throw new Error('Too short comment'); }
         
         element.classList.remove('error');
