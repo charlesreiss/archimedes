@@ -228,6 +228,10 @@ function updateRosterSpreadsheet($uploadrecord, $remove=False, $keepWaiters=True
 
     // read the uploaded spreadsheet
     require_once 'spreadsheet-reader/SpreadsheetReader.php';
+    if (substr_compare($upload_record['name'], ".xls", -4) == 0) {
+        preFeedback("Cannot import .xls file; convert to XLSX first");
+        return;
+    }
     $reader = new SpreadsheetReader($uploadrecord['tmp_name'], $uploadrecord['name'], $uploadrecord['type']);
     foreach($reader->Sheets() as $idx => $name) {
         $reader->ChangeSheet($idx);
@@ -264,6 +268,9 @@ function updateRosterSpreadsheet($uploadrecord, $remove=False, $keepWaiters=True
                     && array_key_exists('name', $olddata[$entry[$head]])) {
                         $entry['grader_name'] = $olddata[$entry[$head]]['name'];
                     }
+                }
+                if (!array_key_exists('name', $entry) && array_key_exists('last name', $entry) && array_key_exists('first name', $entry)) {
+                    $entry['name'] = $entry['first name'] . ' ' . $entry['last name'];
                 }
                 if ($user !== False) {
                     if ($remove) { // if removing missing, have to copy seen people into new array
