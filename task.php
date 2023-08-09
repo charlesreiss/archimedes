@@ -672,7 +672,7 @@ if ($details['grade-visible'] && (
 
 
 // display upload tag
-if ($submittable || $isstaff) {
+if ($submittable) {
     echo "<form action='$_SERVER[SCRIPT_NAME]?submitted=$slug$ext' method='post' enctype='multipart/form-data' class='$class'>
     <input type='hidden' name='slug' value='$slug'/>
     <p>You may ";
