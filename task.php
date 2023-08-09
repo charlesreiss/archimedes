@@ -354,7 +354,7 @@ function show_grade($gradeobj) {
     if (!$gradeobj || !array_key_exists('kind', $gradeobj))
         return "<div class='xp-missed'>It appears the grade data on the server is malformed. Please visit Piazza, search to see if someone else has already reported this, and if not make an open question there identifying the task for which this message appeared.</div>";
     $ans = array();
-    $ans[] = "<small>as of ".date_format(date_create(), "Ymd-His").":</small>";
+    $ans[] = "<small>as of ".date_format(date_create(), "Y-m-d H:i:s").":</small>";
     $any_null = false;
     if ($gradeobj['kind'] == 'percentage') {
 	$ans[] = '<table class="feedback"><tbody>';
