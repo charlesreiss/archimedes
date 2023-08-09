@@ -12,13 +12,62 @@ if (!array_key_exists($slug, assignments())) {
     <title><?=$slug?> – <?=$metadata['title']?> – <?=$me['name']?></title>
     <link rel="stylesheet" href="display.css" type="text/css"></link>
     <script type="text/javascript" src="codebox_<?=array_key_exists("code-lang",$metadata)?$metadata["code-lang"]:"py"?>.js"></script>
+    <style type="text/css">
+        #updateinfodiv {
+            border: #dd0 2px;
+            background: #ffd;
+        }
+    </style>
     <script src="dates_collapse.js"></script>
 </head><body onload="dotimes(); docollapse(); highlight();">
 <?php
 
-
 $details = asgn_details($user, $slug);
 
+?>
+    <script type="text/javascript">
+        var last_time = <?= $details['update_time'] ?>;
+        let frequency = 5000;
+        var interval_id;
+        function write_update(html) {
+            clearInterval(interval_id);
+            let update_info = document.getElementById('updateinfo');
+            update_info.innerHTML = html;
+            let update_info_div = document.getElementById('updateinfodiv');
+            update_info_div.setAttribute('style', '');
+        }
+
+        function wait_for_update() {
+            console.log('in wait_for_update');
+            let http_request = new XMLHttpRequest();
+            function handle_response() {
+                if (http_request.readyState != 4) {
+                    return;
+                }
+                if (http_request.status == 200) {
+                    let response = JSON.parse(http_request.responseText);
+                    if (response.status == 'ok') {
+                        console.log(`${response.time} versus ${last_time}`);
+                        if (response.time > last_time) {
+                            last_time = response.time;
+                            write_update('Information below may be out of date.');
+                        }
+                    } else {
+                        console.log('error checking update status != ok');
+                        write_update('Error checking whether up-to-date.');
+                    }
+                } else {
+                    console.log('error checking update status != 200: ' + http_request.status);
+                    write_update('Error checking whether up-to-date.');
+                }
+            }
+            http_request.onreadystatechange = handle_response;
+            http_request.open("GET", "taskdate.php?task=<?= $slug ?>&asuser=<?= $user ?>");
+            http_request.send();
+        }
+        interval_id = setInterval(wait_for_update, frequency);
+    </script>
+<?php
 $plain_str = $_GET;
 if (array_key_exists('submitted', $plain_str)) { unset($plain_str['submitted']); }
 if (array_key_exists('delete', $plain_str)) { unset($plain_str['delete']); }
@@ -649,6 +698,7 @@ if ($submitted) {
 echo '</div>';
 
 
+echo '<div id="updateinfodiv" style="display:none"><span id="updateinfo"></span><button onclick="window.location.reload()">reload</button></div>';
 
 // display feedback
 if ($details['grade-visible'] && (

@@ -24,7 +24,7 @@ $superusers = array(
 );
 
 function compute_csrf_token() {
-    global $metadata;
+    global $metadata, $user;
     return hash("sha256", $metadata['csrf_key'] . $metadata['title'] . $user);
 }
 
@@ -717,6 +717,20 @@ function svg_progress_bar($ep, $fp, $mp) {
 }
 
 
+function _asgn_load_item(&$details, $stem, $key) {
+    $path = "uploads/$details[slug]/$details[student]/.$stem";
+    if (file_exists($path)) {
+        $details[$key] = json_decode(file_get_contents($path), TRUE);
+        $details['update_time'] = max(
+            $details['update_time'],
+            filemtime($path)
+        );
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
+
 /**
  * The assignment details augmented with per-user information:
  * any extensions and excuses;
@@ -734,6 +748,7 @@ function svg_progress_bar($ep, $fp, $mp) {
  * - .partners (array of partners)
  * - .ext-req (contents of extension request file)
  * - rubric (result of rubricOf)
+ * - update_time (latest info update within grades, files)
  */
 function asgn_details($student, $slug) {
     global $isstaff;
@@ -746,6 +761,7 @@ function asgn_details($student, $slug) {
     );
 
     $details = assignments(true)[$slug];
+    $details['update_time'] = 0;
     if (!array_key_exists('rubric', $details))
         $details['rubric'] = rubricOf($slug);
     $details['student'] = $student;
@@ -756,15 +772,12 @@ function asgn_details($student, $slug) {
         $details['excused'] = TRUE;
         $details['weight'] = 0;
     }
-    if (file_exists("uploads/$slug/$student/.checkoff")) {
-        $details['checkoff'] = json_decode(file_get_contents("uploads/$slug/$student/.checkoff"));
+    _asgn_load_item($details, 'checkoff', 'checkoff');
+    if ((!array_key_exists('withhold',$details) || $isstaff)) {
+        _asgn_load_item($details, 'grade', 'grade');
+        _asgn_load_item($details, 'gradetemplate', 'grade_template');
     }
-    if ((!array_key_exists('withhold',$details) || $isstaff) && file_exists("uploads/$slug/$student/.grade"))
-        $details['grade'] = json_decode(file_get_contents("uploads/$slug/$student/.grade"), TRUE);
-    if (file_exists("uploads/$slug/$student/.gradetemplate"))
-	$details['grade_template'] = json_decode(file_get_contents("uploads/$slug/$student/.gradetemplate"), TRUE);
-    if (file_exists("uploads/$slug/$student/.autograde")) {
-        $details['autograde'] = json_decode(file_get_contents("uploads/$slug/$student/.autograde"), TRUE);
+    if (_asgn_load_item($details, 'autograde', 'autograde')) {
         $details['autograde']['created'] = filemtime("uploads/$slug/$student/.autograde");
         if (array_key_exists('grade', $details) && (!array_key_exists('auto', $details['grade']) || $details['grade']['auto'] < $details['autograde']['correctness'])) { // HACK to deal with re-run tests
             $details['grade']['auto']  = $details['autograde']['correctness'];
@@ -779,7 +792,7 @@ function asgn_details($student, $slug) {
     } else if (closeTime($details) < time()) {
         $details['autograde'] = $nopoints;
     }
-   
+
     if (!array_key_exists('weight', $details)) $details['weight'] = 1;
     
     // add list of submissions and last-not-late autograde
@@ -808,12 +821,14 @@ function asgn_details($student, $slug) {
         }
         if ($feedback) continue;
         $t = filemtime($path);
+        $details['update_time'] = max($t, $details['update_time']);
         if ($t > $sentin) $sentin = $t;
     }
     if (file_exists("uploads/$slug/$student/.latest")) {
         $latest_lines = explode("\n",trim(file_get_contents("uploads/$slug/$student/.latest")));
         $details['.latest'] = $latest_lines[0];
         $details['.latest-subdir'] = $latest_lines[1];
+        $sentin = 0;
         foreach (glob("uploads/$slug/$student/." . $details['.latest-subdir'] . "/*") as $path) {
             if (array_key_exists('feedback-files', $details)) {
                 foreach($details['feedback-files'] as $pattern) {
@@ -821,8 +836,9 @@ function asgn_details($student, $slug) {
                 }
             }
             if ($feedback) continue;
-            $sentin = filemtime($path);
+            $sentin = max($sentin, filemtime($path));
         }
+        $details['update_time'] = max($sentin, $details['update_time']);
     }
     $details['submitted'] = $sentin;
     $late_days = ($sentin - assignmentTime('due', $details)) / (60 * 60 * 24);
@@ -930,8 +946,8 @@ function asgn_details($student, $slug) {
         if ($last) $details['autograde']['created'] = $last;
     }
     
-    $details['grade-visible'] = true;
     $now = date_format(date_create(), "Ymd-His");
+    $details['grade-visible'] = true;
     if (array_key_exists('withhold', $details) && $details['withhold']) {
         $details['grade-visible'] = false;
     } else if (array_key_exists('.ext-req', $details)) {
