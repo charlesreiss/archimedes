@@ -27,7 +27,7 @@ $details = asgn_details($user, $slug);
 ?>
     <script type="text/javascript">
         var last_time = <?= $details['update_time'] ?>;
-        let frequency = 5000;
+        let frequency = 60000;
         var interval_id;
         function write_update(html) {
             clearInterval(interval_id);
