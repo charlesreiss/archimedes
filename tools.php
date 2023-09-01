@@ -1146,7 +1146,11 @@ function score_of_task($details) {
 	$score = $gradeobj['ratio'];
     } else if ($gradeobj['kind'] == 'hybrid') {
         // correctness
-        $score = $gradeobj['auto'];
+        if (array_key_exists('auto', $gradeobj)) {
+            $score = $gradeobj['auto'];
+        } else {
+            $score = 0;
+        }
         $lat = array_key_exists('auto-late', $gradeobj) ? $gradeobj['auto-late'] : $score;
         if ($lat > $score) {
             $pen = array_key_exists('late-penalty', $gradeobj) ? $gradeobj['late-penalty'] : 0.5;
