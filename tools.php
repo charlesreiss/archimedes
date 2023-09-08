@@ -595,7 +595,7 @@ function studentDropdown($name) {
     $ans = "<input type='text' title='example: mst3k' list='students-list' name='$name'/><datalist id='students-list'>";
     foreach(fullRoster() as $slug=>$details) {
         if (array_key_exists('role', $details) && $details['role'] == 'Admin') continue;
-        if (!array_key_exists('role', $details) || $details['role'] != 'Student') continue;
+        if (!array_key_exists('role', $details) || ($details['role'] != 'Student' && $details['role'] != 'Waitlisted Student')) continue;
         $ans .= "<option value='$slug'>$details[name] ($slug)</option>";
     }
     // $ans .= '</select>';
@@ -830,6 +830,7 @@ function asgn_details($student, $slug) {
         $details['.latest-subdir'] = $latest_lines[1];
         $sentin = 0;
         foreach (glob("uploads/$slug/$student/." . $details['.latest-subdir'] . "/*") as $path) {
+            $feedback = 0;
             if (array_key_exists('feedback-files', $details)) {
                 foreach($details['feedback-files'] as $pattern) {
                     if (fnmatch($pattern, basename($path), FNM_PERIOD)) $feedback = 1;
