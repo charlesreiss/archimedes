@@ -951,8 +951,8 @@ function asgn_details($student, $slug) {
     $details['grade-visible'] = true;
     if (array_key_exists('withhold', $details) && $details['withhold']) {
         $details['grade-visible'] = false;
-    } else if (array_key_exists('.ext-req', $details)) {
-        $details['grade-visible'] = false;
+    #} else if (array_key_exists('.ext-req', $details)) {
+    #    $details['grade-visible'] = false;
     } else if (
         array_key_exists('hide_grade_before_due', $details) &&
         (assignmentTime('due', $details) < $now) && 
