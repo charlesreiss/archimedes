@@ -40,7 +40,7 @@ foreach(fullRoster() as $id=>$details) {
     echo ",$final,"; // cumulative
     echo letterOf($final).",";
     foreach($overall as $grp=>$scores) {
-        if ($scores['earned'] + scores['missed'] == 0) {
+        if ($scores['earned'] + $scores['missed'] == 0) {
             echo ',';
         } else {
             echo "," . ($scores['earned']/($scores['earned']+$scores['missed']));
