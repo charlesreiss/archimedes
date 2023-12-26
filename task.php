@@ -388,11 +388,16 @@ function show_grade($gradeobj) {
             }
 	    $human += $entry['weight'] * $r;
 	    $human_denom += $entry['weight'];
-            if ($entry['type'] == 'points' || $entry['type'] == 'score') {
+            if (array_key_exists('type', $entry)) {
+                $type = 'normal';
+            } else {
+                $type = $entry['type'];
+            }
+            if ($type == 'points' || $type == 'score') {
                 _show_grade_obj_points($ans, $r, $entry['weight'], $entry['name']);
-            } else if ($entry['type'] == 'header') {
+            } else if ($type ==  'header') {
                 _show_grade_obj_row($ans, false, $entry['name']);
-            } else if ($entry['type'] == 'comment') {
+            } else if ($type == 'comment') {
             } else {
                 if ($entry['weight'] == 0) {
                     _show_grade_obj_row($ans, $r, $entry['name'], false, '', false);
@@ -403,8 +408,8 @@ function show_grade($gradeobj) {
             if (array_key_exists('comments', $entry) && strlen($entry['comments']) > 0) {
                 _show_grade_obj_row($ans, false, $entry['comments']);
             }
-            if (array_key_exists('comment', $entry) && strlen($entry['comment']) > 0) {
-                _show_grade_obj_row($ans, false, $entry['comment']);
+            if (array_key_exists('comment', $entry)) {
+                user_error_msg('Malformed grade file ("comment"); please inform instructor.');
             }
 	}
     }
