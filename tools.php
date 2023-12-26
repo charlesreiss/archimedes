@@ -1166,9 +1166,13 @@ function score_of_task($details) {
         $human_denom = 0;
         if (array_key_exists('human', $gradeobj)) {
             foreach($gradeobj['human'] as $entry) {
-                $r = $entry['ratio'];
-                $human += $entry['weight'] * $r;
-                $human_denom += $entry['weight'];
+                if (array_key_exists('ratio', $entry)) {
+                    $r = $entry['ratio'];
+                    $human += $entry['weight'] * $r;
+                    $human_denom += $entry['weight'];
+                } else if (array_key_exists('weight', $entry)) {
+                    $human_denom += $entry['weight'];
+                }
             }
         }
         
