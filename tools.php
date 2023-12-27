@@ -400,13 +400,11 @@ function hasStaffRole($me) {
  * $isself, $isstaff, and $isfaculty (booleans).
  */
 function logInAs($compid=false, $initial=true) {
-    global $user, $me, $isstaff, $isself, $isfaculty;
+    global $user, $me, $isstaff, $isself, $isfaculty, $realuser, $realme;
     if ($compid !== false) {
         $user = $compid;
     } else if (array_key_exists('PHP_AUTH_USER', $_SERVER)) {
         $user = $_SERVER['PHP_AUTH_USER'];
-    //} else if ($_SERVER['REMOTE_ADDR'] == '127.0.0.1' || $_SERVER['REMOTE_ADDR'] == '[::1]' || $_SERVER['REMOTE_ADDR'] == 'localhost') {
-        //$user = 'lat7h'; // testing
     } else {
         preFeedback("ERROR: you don't appear to be authenticated with NetBadge.");
         var_dump($_SERVER);
@@ -433,6 +431,10 @@ function logInAs($compid=false, $initial=true) {
     }
     
     $isself = true;
+    if ($initial) {
+        $realuser = $user;
+        $realme = $me;
+    }
     if ($initial && $isstaff && array_key_exists('asuser', $_GET)) {
         global $_me;
         $_me = false;
@@ -1140,6 +1142,25 @@ function cumulative_status($student, &$progress=False, &$projected_score=False) 
 
  */
 
+function score_of_rubric_items($items) {
+    $total = 0;
+    $total_denom = 0;
+    foreach($items as $entry) {
+        if (array_key_exists('ratio', $entry)) {
+            $r = $entry['ratio'];
+            $total += $entry['weight'] * $r;
+            $total_denom += $entry['weight'];
+        } else if (array_key_exists('weight', $entry)) {
+            $total_denom += $entry['weight'];
+        }
+    }
+    if ($total_denom == 0) {
+        return NULL;
+    } else {
+        return $total/$total_denom;
+    }
+}
+
 function score_of_task($details) {
     $gradeobj = $details['grade'];
     if (!$gradeobj || !array_key_exists('kind', $gradeobj)) return NAN;
@@ -1162,35 +1183,17 @@ function score_of_task($details) {
         }
 
         // code coach feedback
-        $human = 0;
-        $human_denom = 0;
         if (array_key_exists('human', $gradeobj)) {
-            foreach($gradeobj['human'] as $entry) {
-                if (array_key_exists('ratio', $entry)) {
-                    $r = $entry['ratio'];
-                    $human += $entry['weight'] * $r;
-                    $human_denom += $entry['weight'];
-                } else if (array_key_exists('weight', $entry)) {
-                    $human_denom += $entry['weight'];
-                }
-            }
+            $human_score = score_of_rubric_items($gradeobj['human']);
+        } else {
+            $human_score = NULL;
         }
         
         // combined
         $aw = array_key_exists('auto-weight', $gradeobj) ? $gradeobj['auto-weight'] : 0.5;
-        $score = ($human_denom > 0 ? $human/$human_denom*(1-$aw) : 0) + $score*$aw;
+        $score = ($human_score != NULL ? $human_score : 0) + $score*$aw;
     } else if ($gradeobj['kind'] == 'rubric') {
-        // code coach feedback
-        $rubric = 0;
-        $rubric_denom = 0;
-        if (array_key_exists('items', $gradeobj)) {
-            foreach($gradeobj['rubric'] as $entry) {
-                $r = $entry['ratio'];
-                $rubric += $entry['weight'] * $r;
-                $rubric_denom += $entry['weight'];
-            }
-        }
-        $score = $rubric*1.0/$rubric_denom;
+        $score = score_of_rubric_items($gradeobj['items']);
     }
 
     if (array_key_exists('.mult', $gradeobj) && $score > 0.0) {
@@ -1206,6 +1209,148 @@ function score_of_task($details) {
         $score -= $gradeobj['.sub']['portion'];
     }
     return $score;
+}
+
+function sync_rubric_items_for_grade_items($grade_items, $rubric_items) {
+    $is_incomplete = FALSE;
+    if (count($grade_items) != count($rubric_items)) die('wrong number of entries in human grading');
+    foreach($rubric_items as $i=>$val) {
+        if (!is_array($val)) $val = array('weight'=>1, 'key'=>$val, 'name'=>$val);
+        if (array_key_exists('key', $grade_items[$i])) {
+            if ($grade_items[$i]['key'] != $val['key']) die('rubric has changed' . $val['key'] . 'versus' . $grade_items[$i]['key']);
+        } else {
+            if ($grade_items[$i]['name'] != $val['name']) {
+                die('rubric has changed');
+            }
+        }
+        if (!array_key_exists('weight', $grade_items[$i])) {
+            $grade_items[$i]['weight'] = $val['weight'];
+        }
+        if (array_key_exists('type', $val)) {
+            $grade_items[$i]['type'] = $val['type'];
+        }
+        if (array_key_exists('key', $val)) {
+            $grade_items[$i]['key'] = $val['key'];
+        }
+        if (!array_key_exists('ratio', $grade_items[$i]) || 
+            is_null($grade_items[$i]['ratio'])) {
+            if ($grade_items[$i]['weight'] == 0) {
+            } else {
+                $is_incomplete = TRUE;
+            }
+        }
+    }
+    return $is_incomplete;
+}
+
+function sync_rubric_for_grade($grade) {
+    $is_incomplete = FALSE;
+    $rub = rubricOf($grade['slug']);
+    if ($rub['kind'] != $grade['kind'])
+        die("expected '$rub[kind]' (not '$grade[kind]') for $grade[slug]");
+    if ($grade['kind'] == 'hybrid') {
+        $grade['auto-weight'] = $rub['auto-weight'];
+        $grade['late-penalty'] = $rub['late-penalty'];
+        // and computed values
+        if (array_key_exists('ontime', $details)) {
+            $grade['auto-late'] = $details['autograde']['correctness'];
+            $grade['auto'] = $details['ontime']['correctness'];
+        } else if (array_key_exists('autograde', $details)) {
+            $grade['auto'] = $details['autograde']['correctness'];
+        } else {
+            $grade['auto'] = 0;
+        }
+        sync_rubric_items_for_grade_items($grade['human'], $rub['human']);
+    } else if ($kind == 'rubric') {
+        sync_rubric_items_for_grade_items($grade['human'], $rub['human']);
+    }
+}
+
+function record_grade($details, $grade) {
+    $is_incomplete = FALSE;
+    # preserve hidden information
+    if (array_key_exists('grade', $details)) {
+        foreach ($details['grade'] as $k => $v) {
+            # FIXME: hack
+            if ($k == '.adjustment') { continue; }
+            if (!array_key_exists($k, $grade)) {
+                $grade[$k] = $v;
+            }
+        }
+    }
+
+    $is_incomplete = sync_rubric_for_grade($grade);
+    
+    // post to uploads/assignment/.gradelog and uploads/assignment/student/.grade
+    $payload = json_encode($grade);
+    if (!$is_incomplete) {
+        file_put("uploads/$grade[slug]/$grade[student]/.grade", $payload)  || die('failed to record grade (may be server permission error?)');
+        file_append("users/.graded/$user/$grade[slug]", "$grade[student]\n");
+        if (file_exists("uploads/$grade[slug]/$grade[student]/.partners")) {
+            foreach(explode("\n",file_get_contents("uploads/$grade[slug]/$grade[student]/.partners")) as $pair) {
+                file_put("uploads/$grade[slug]/$pair/.grade", $payload);
+                file_append("users/.graded/$user/$grade[slug]", "$pair\n");
+            }
+        }
+        file_append("uploads/$grade[slug]/.gradelog", "$payload\n");
+        if (file_exists("uploads/$grade[slug]/$grade[student]/.gradetemplate")) {
+            unlink("uploads/$grade[slug]/$grade[student]/.gradetemplate");
+        }
+    } else {
+        file_put("uploads/$grade[slug]/$grade[student]/.gradetemplate", $payload)  || die('failed to record grade (may be server permission error?)');
+        if (file_exists("uploads/$grade[slug]/$grade[student]/.grade")) {
+            $stamp = date_format(date_create(), "Ymd-His");
+            rename("uploads/$grade[slug]/$grade[student]/.grade",
+                   "uploads/$grade[slug]/$grade[student]/.backup-$stamp-grade");
+        }
+        file_append("users/.graded/$user/$grade[slug]", "$grade[student]\n");
+        if (file_exists("uploads/$grade[slug]/$grade[student]/.partners")) {
+            foreach(explode("\n",file_get_contents("uploads/$grade[slug]/$grade[student]/.partners")) as $pair) {
+                file_put("uploads/$grade[slug]/$pair/.gradetemplate", $payload);
+                file_append("users/.graded/$user/$grade[slug]", "$pair\n");
+                if (file_exists("uploads/$grade[slug]/$pair/.grade")) {
+                    $stamp = date_format(date_create(), "Ymd-His");
+                    rename("uploads/$grade[slug]/$pair/.grade",
+                           "uploads/$grade[slug]/$pair/.backup-$stamp-grade");
+                }
+            }
+        }
+        file_append("uploads/$grade[slug]/.gradetemplatelog", "$payload\n");
+    }
+}
+
+function add_chat($assignment, $student, $messages) {
+    $chatfile = "uploads/$assignment/$student/.chat";
+    if (file_exists($chatfile)) $chatter = json_decode(file_get_contents($chatfile), true);
+    else $chatter = array();
+    array_push($chtter, ...$messages);
+        file_put($chatfile, json_encode($chatter)) || die('failed to record decision (may be server permission error?)');
+}
+
+function student_chat_message($student, $message, $kind) {
+    return array(
+        'user' => $student,
+        'show' => rosterEntry($student)['name'],
+        'kind' => $kind,
+        'msg' => $message
+    );
+}
+
+function staff_chat_message($message, $kind) {
+    global $realme, $me, $user, $realuser;
+    if (hasStaffRule($me)) {
+        $use_user = $user;
+        $use_me = $me;
+    } else {
+        $use_user = $realuser;
+        $use_me = $realme;
+    }
+    return array(
+        'user' => $ruse_user,
+        'show' => $use_me['name'],
+        'kind' => $kind,
+        'msg' => $message
+    );
 }
 
 ?>

@@ -18,126 +18,21 @@ if (array_key_exists('addgrade', $_REQUEST) || array_key_exists('respondtoregrad
 
     // log regrade chatter
     $reqfile = "meta/requests/regrade/$grade[slug]-$grade[student]";
-    if (array_key_exists('regrade', $grade) && file_exists($reqfile)) {
-        $chatfile = "uploads/$grade[slug]/$grade[student]/.chat";
-        if (file_exists($chatfile)) $chatter = json_decode(file_get_contents($chatfile), true);
-        else $chatter = array();
-
-        $chatter[] = array(
-            'user'=>$grade['student'],
-            'show'=>rosterEntry($grade['student'])['name'],
-            'kind'=>'regrade', 
-            'msg'=>file_get_contents($reqfile),
-        );
-        
-        $chatter[] = array(
-            'user'=>$user,
-            'show'=>$me['name'],
-            'kind'=>'regrade', 
-            'msg'=>$grade['regrade'],
-        );
-        unset($grade['regrade']);
-        file_put($chatfile, json_encode($chatter)) || die('failed to record decision (may be server permission error?)');
-        unlink($reqfile);
-    }
     if (array_key_exists('addgrade', $_REQUEST)) {
         $details = asgn_details($grade['student'], $grade['slug']);
-        $is_incomplete = FALSE;
-        # preserve hidden information
-        if (array_key_exists('grade', $details)) {
-            foreach ($details['grade'] as $k => $v) {
-                # FIXME: hack
-                if ($k == '.adjustment') { continue; }
-                if (!array_key_exists($k, $grade)) {
-                    $grade[$k] = $v;
-                }
-            }
-        }
-        
-        $rub = rubricOf($grade['slug']);
-        if ($rub['kind'] != $grade['kind']) die("expected '$rub[kind]' (not '$grade[kind]') for $grade[slug]");
-        if ($grade['kind'] == 'hybrid') {
-		// add rubric details
-            $grade['auto-weight'] = $rub['auto-weight'];
-            $grade['late-penalty'] = $rub['late-penalty'];
-            // and computed values
-            if (array_key_exists('ontime', $details)) {
-                $grade['auto-late'] = $details['autograde']['correctness'];
-                $grade['auto'] = $details['ontime']['correctness'];
-            } else if (array_key_exists('autograde', $details)) {
-                $grade['auto'] = $details['autograde']['correctness'];
-            } else {
-                $grade['auto'] = 0;
-            }
-            
-            // and weights
-            if (count($grade['human']) != count($rub['human'])) die('wrong number of entries in human grading');
-            foreach($rub['human'] as $i=>$val) {
-                if (!is_array($val)) $val = array('weight'=>1, 'key'=>$val, 'name'=>$val);
-                if (array_key_exists('key', $grade['human'][$i])) {
-                    if ($grade['human'][$i]['key'] != $val['key']) die('rubric has changed' . $val['key'] . 'versus' . $grade['human'][$i]['key']);
-                } else {
-                    if ($grade['human'][$i]['name'] != $val['name']) {
-                        die('rubric has changed');
-                    }
-                }
-                if (!array_key_exists('weight', $grade['human'][$i])) {
-                    $grade['human'][$i]['weight'] = $val['weight'];
-                }
-                if (array_key_exists('type', $val)) {
-                    $grade['human'][$i]['type'] = $val['type'];
-                }
-                if (array_key_exists('key', $val)) {
-                    $grade['human'][$i]['key'] = $val['key'];
-                }
-                if (!array_key_exists('ratio', $grade['human'][$i]) || 
-                    is_null($grade['human'][$i]['ratio'])) {
-                    if ($grade['human'][$i]['weight'] == 0) {
-                    } else {
-                        $is_incomplete = TRUE;
-                    }
-                }
-            }
-        }
-        
-        // post to uploads/assignment/.gradelog and uploads/assignment/student/.grade
-        $payload = json_encode($grade);
-        if (!$is_incomplete) {
-            file_put("uploads/$grade[slug]/$grade[student]/.grade", $payload)  || die('failed to record grade (may be server permission error?)');
-            file_append("users/.graded/$user/$grade[slug]", "$grade[student]\n");
-            if (file_exists("uploads/$grade[slug]/$grade[student]/.partners")) {
-                foreach(explode("\n",file_get_contents("uploads/$grade[slug]/$grade[student]/.partners")) as $pair) {
-                    file_put("uploads/$grade[slug]/$pair/.grade", $payload);
-                    file_append("users/.graded/$user/$grade[slug]", "$pair\n");
-                }
-            }
-            file_append("uploads/$grade[slug]/.gradelog", "$payload\n");
-            # FIXME: move logic to tools.php
-            if (file_exists("uploads/$grade[slug]/$grade[student]/.gradetemplate")) {
-                unlink("uploads/$grade[slug]/$grade[student]/.gradetemplate");
-            }
-        } else {
-            file_put("uploads/$grade[slug]/$grade[student]/.gradetemplate", $payload)  || die('failed to record grade (may be server permission error?)');
-            # FIXME: move logic to tools.php
-            if (file_exists("uploads/$grade[slug]/$grade[student]/.grade")) {
-                $stamp = date_format(date_create(), "Ymd-His");
-                rename("uploads/$grade[slug]/$grade[student]/.grade",
-                       "uploads/$grade[slug]/$grade[student]/.backup-$stamp-grade");
-            }
-            file_append("users/.graded/$user/$grade[slug]", "$grade[student]\n");
-            if (file_exists("uploads/$grade[slug]/$grade[student]/.partners")) {
-                foreach(explode("\n",file_get_contents("uploads/$grade[slug]/$grade[student]/.partners")) as $pair) {
-                    file_put("uploads/$grade[slug]/$pair/.gradetemplate", $payload);
-                    file_append("users/.graded/$user/$grade[slug]", "$pair\n");
-                    if (file_exists("uploads/$grade[slug]/$pair/.grade")) {
-                        $stamp = date_format(date_create(), "Ymd-His");
-                        rename("uploads/$grade[slug]/$pair/.grade",
-                               "uploads/$grade[slug]/$pair/.backup-$stamp-grade");
-                    }
-                }
-            }
-            file_append("uploads/$grade[slug]/.gradetemplatelog", "$payload\n");
-        }
+        record_grade($details, $grade);
+    }
+    if (array_key_exists('regrade', $grade) && file_exists($reqfile)) {
+        $chatter = array();
+        $chatter[] = student_chat_message(
+            $grade['student'],
+            file_get_contents($reqfile),
+            'regrade'
+        );
+        $chatter[] = staff_chat_message($grade['regrade'], 'regrade');
+        unset($grade['regrade']);
+        add_chat($grade['slug'], $grade['student'], $chatter);
+        unlink($reqfile);
     }
 
     // inform invoking method of success

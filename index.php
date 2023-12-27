@@ -82,17 +82,13 @@ if ($isfaculty && array_key_exists('extension_decision', $_POST)) {
         preFeedback("Processing extension request $_POST[extension_assignment]/$_POST[extension_student] (decision was $_POST[extension_decision])");
         
         $reqfile = "meta/requests/extension/$_POST[extension_assignment]"."-"."$_POST[extension_student]";
-        
-        $chatfile = "uploads/$_POST[extension_assignment]/$_POST[extension_student]/.chat";
-        if (file_exists($chatfile)) $chatter = json_decode(file_get_contents($chatfile), true);
-        else $chatter = array();
-
+       
+        $chatter = array();
         if (file_exists($reqfile)) {
-            $chatter[] = array(
-                'user'=>$_POST['extension_student'],
-                'show'=>rosterEntry($_POST['extension_student'])['name'],
-                'kind'=>'extension', 
-                'msg'=>file_get_contents($reqfile),
+            $chatter[] = student_chat_message(
+                $_POST['extension_student'],
+                file_get_contents($regfile),
+                'extension'
             );
             unlink($reqfile);
         }
@@ -118,21 +114,14 @@ if ($isfaculty && array_key_exists('extension_decision', $_POST)) {
             else {
                 preFeedback("Recorded new deadline of $object[due] (close time ".prettyTime($object['close']).") for $_POST[extension_assignment]/$_POST[extension_student]");
             }
-            $chatter[] = array(
-                'user'=>$user, 
-                'show'=>$me['name'], 
-                'kind'=>'extension', 
-                'msg'=>'Set new deadline as '.$object['due'],
+            $chatter[] = staff_chat_message(
+                'Set new deadline as '.$object['due'],
+                'extension'
             );
         } else {
-            $chatter[] = array(
-                'user'=>$user, 
-                'show'=>$me['name'], 
-                'kind'=>'extension', 
-                'msg'=>$_POST['rejection'],
-            );
+            $chatter[] = staff_chat_message($_POST['rejection'], 'extension');
         }
-        if (!file_put($chatfile, json_encode($chatter))) preFeedback("Failed to put decision into .chat");
+        add_chat($_POST['extension_assignment'], $_POST['extension_student'], $chatter);
     }
 }
 // If faculty and sent exemption decision, accept it
