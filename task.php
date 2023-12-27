@@ -349,6 +349,50 @@ if (array_key_exists('submitted', $_GET) && $_GET['submitted']) {
     die('</body></html>');
 }
 
+function _show_grade_rubric_items($items) {
+    $total = 0;
+    $total_denom = 0;
+    foreach ($items as $entry) {
+        $r = $entry['ratio'];
+        if ($entry['weight'] == 0.0 && (array_key_exists('sometimes_na', $entry))) {
+            continue;
+        }
+        if ($entry['weight'] > 0.0 && is_null($r)) {
+            $any_null = true;
+        }
+        $total += $entry['weight'] * $r;
+        $total_denom += $entry['weight'];
+        if (array_key_exists('type', $entry)) {
+            $type = 'normal';
+        } else {
+            $type = $entry['type'];
+        }
+        if ($type == 'points' || $type == 'score') {
+            _show_grade_obj_points($ans, $r, $entry['weight'], $entry['name']);
+        } else if ($type ==  'header') {
+            _show_grade_obj_row($ans, false, $entry['name']);
+        } else if ($type == 'comment') {
+        } else {
+            if ($entry['weight'] == 0) {
+                _show_grade_obj_row($ans, $r, $entry['name'], false, '', false);
+            } else {
+                _show_grade_obj_row($ans, $r, $entry['name'] . ' (' . $entry['weight'] . ' points)');
+            }
+        }
+        if (array_key_exists('comments', $entry) && strlen($entry['comments']) > 0) {
+            _show_grade_obj_row($ans, false, $entry['comments']);
+        }
+        if (array_key_exists('comment', $entry)) {
+            user_error_msg('Malformed grade file ("comment"); please inform instructor.');
+        }
+    }
+
+    if ($any_null || $total_denom == 0) {
+        return NULL;
+    } else {
+        return $total / $total_denom;
+    }
+}
 
 function show_grade($gradeobj) {
     if (!$gradeobj || !array_key_exists('kind', $gradeobj))
@@ -376,42 +420,12 @@ function show_grade($gradeobj) {
 	} else { $score = 0; }
 
 	// staff feedback
-	$human = 0;
-	$human_denom = 0;
-	foreach($gradeobj['human'] as $entry) {
-	    $r = $entry['ratio'];
-            if ($entry['weight'] == 0.0 && (array_key_exists('sometimes_na', $entry))) {
-                continue;
-            }
-            if ($entry['weight'] > 0.0 && is_null($r)) {
-                $any_null = true;
-            }
-	    $human += $entry['weight'] * $r;
-	    $human_denom += $entry['weight'];
-            if (array_key_exists('type', $entry)) {
-                $type = 'normal';
-            } else {
-                $type = $entry['type'];
-            }
-            if ($type == 'points' || $type == 'score') {
-                _show_grade_obj_points($ans, $r, $entry['weight'], $entry['name']);
-            } else if ($type ==  'header') {
-                _show_grade_obj_row($ans, false, $entry['name']);
-            } else if ($type == 'comment') {
-            } else {
-                if ($entry['weight'] == 0) {
-                    _show_grade_obj_row($ans, $r, $entry['name'], false, '', false);
-                } else {
-                    _show_grade_obj_row($ans, $r, $entry['name'] . ' (' . $entry['weight'] . ' points)');
-                }
-            }
-            if (array_key_exists('comments', $entry) && strlen($entry['comments']) > 0) {
-                _show_grade_obj_row($ans, false, $entry['comments']);
-            }
-            if (array_key_exists('comment', $entry)) {
-                user_error_msg('Malformed grade file ("comment"); please inform instructor.');
-            }
-	}
+        $human_ratio = _show_grade_rubric_items($gradeobj['human']);
+        if ($human_ratio === NULL) {
+            $any_null = true;
+        }
+    } else if ($gradeobj['kind'] == 'rubric') {
+        $score = _show_grade_rubric_items($gradeobj['items']);
     }
     // comment
     if (array_key_exists('comments', $gradeobj)) {
@@ -428,8 +442,7 @@ function show_grade($gradeobj) {
     $ans[] = '<tr class="break"><td colspan="2"></td></tr>';
 
     // combined
-    if ($gradeobj['kind'] == 'percentage') {
-    } else {
+    if ($gradeobj['kind'] == 'hybrid') {
 	$aw = array_key_exists('auto-weight', $gradeobj) ? $gradeobj['auto-weight'] : 0.5;
 	$score = $human/$human_denom*(1-$aw) + $score*$aw;
     }
