@@ -43,14 +43,30 @@ if (array_key_exists('addgrade', $_REQUEST) || array_key_exists('respondtoregrad
 ?><?php
 // useful functions
 
-function percent_tag($id, $text, $percent, $comment) {
+function percent_tag($id, $text, $percent, $comments) {
     return "<div class='percentage' id='$id'>
         <input type='text' id='$id|percent' value='$percent' size='4'/>% $text
-        <div class='comment'><span>Comment:</span><textarea id='$id|comment'>$comment</textarea></div>
+        <div class='comments'><span>Comment:</span><textarea id='$id|comments'>$comments</textarea></div>
     </div>";
 }
 
-function item_tag($id, $rubric, $selected, $weight, $comment) {
+function item_tag($id, $rubric, $selected, $weight, $comments) {
+    if (!is_array($item)) {
+        $item = array('name' => $item, 'key' => $item, 'weight' => 1.0, 'type' => 'radio');
+    }
+    $select = False;
+    $weight = $item['weight']
+    $comments = '';
+    if (!is_null($grade_item) && (
+            !array_key_exists('key', $grade_item) || $grade_item['key'] == $rubric['key']
+    )) {
+        $select = $grade_item['ratio']
+        if (is_null($select)) {
+            $select = False;
+        }
+        $weight = $grade_item['weight']
+        $comments = $details['grade']['human'][$i]['comments'];
+    }
     $key = htmlspecialchars($rubric["key"]);
     $name = htmlspecialchars($rubric["name"]);
     $rubric_weight = $rubric["weight"];
@@ -59,14 +75,14 @@ function item_tag($id, $rubric, $selected, $weight, $comment) {
         $type = $rubric["type"];
     }
     $data = "data-key='$key' data-name='$name' name='$id' data-weight='$weight' data-current-weight='$weight' data-current-selected='$selected'";
-    if ($type == "comment") {
+    if ($type == "comments" || $type == 'comment') {
         $result = "<div class='item'>
             <label for='$id'>$name</label>:
             </div>
         ";
         $result .= "
-            <div class='itemcomment'><label for='$id|comment'>Standalone comment:</label>
-            <textarea $data data-is-item-comment='yes' id='$id|comment'>$comment</textarea>
+            <div class='itemcomments'><label for='$id|comments'>Comments:</label>
+            <textarea $data data-is-item-comments='yes' id='$id|comments'>$comments</textarea>
             </div>
         ";
         return $result;
@@ -80,16 +96,8 @@ function item_tag($id, $rubric, $selected, $weight, $comment) {
             <label for='$id'>$name</label>: <input type='text' $data data-points-of='$rubric_weight' value='$value'> of $rubric_weight
         ";
         $result .= "</div>";
-        #if (array_key_exists('allow_comment', $rubric)) {
-            $result .= "
-                <div class='itemcomment'><label for='$id|comment'>Item comment:</label>
-                <textarea $data data-is-item-comment='yes' id='$id|comment'>$comment</textarea>
-                </div>
-            ";
-        #}
-        return $result;
     } else {
-        $incomplete_p = $selected === False;
+        $incomplete_p = $selected === False
         if ($incomplete_p) {
             if ($weight == 0.0) {
                 $incomplete_class = "incomplete-optional";
@@ -133,15 +141,15 @@ function item_tag($id, $rubric, $selected, $weight, $comment) {
         ";
         $result .="
         </div>";
-        #if (array_key_exists('allow_comment', $rubric)) {
-            $result .= "
-                <div class='itemcomment'><label for='$id|comment'>Item comment:</label>
-                <textarea $data data-is-item-comment='yes' id='$id|comment'>$comment</textarea>
-                </div>
-            ";
-        #}
-        return $result;
     }
+    if (!array_key_exists('suppress_comments', $rubric)) {
+        $result .= "
+            <div class='itemcomment'><label for='$id|comments'>Item comments:</label>
+            <textarea $data data-is-item-comments='yes' id='$id|comments'>$comment</textarea>
+            </div>
+        ";
+    }
+    return $result;
 }
 
 function get_adjust_section($id, $details) {
@@ -173,8 +181,8 @@ function percent_tree($details) {
     $id = "$details[slug]|$details[student]";
     $text = 'correct';
     $ratio = array_key_exists('grade', $details) ? $details['grade']['ratio']*100 : '';
-    $comment = array_key_exists('grade', $details) ? htmlspecialchars($details['grade']['comments']) : '';
-    $innertag = percent_tag($id, $text, $ratio, $comment);
+    $comments = array_key_exists('grade', $details) ? htmlspecialchars($details['grade']['comments']) : '';
+    $innertag = percent_tag($id, $text, $ratio, $comments);
     $adjust_section = get_adjust_section($id, $details);
     return "
         <div class='percentage-outer' id='$id|outer'>
@@ -182,40 +190,6 @@ function percent_tree($details) {
             $adjust_section
         </div>
     ";
-}
-
-
-function rubric_tree($details) {
-    foreach($details['rubric']['items'] as $i=>$item) {
-        $sometimes_na = False;
-        $prompt_points = False;
-        if (!is_array($item)) {
-            $item = array('name' => $item, 'key' => $item, 'weight' => 1.0, 'type' => 'radio');
-        }
-        if (!array_key_exists('key', $item)) {
-            $item['key'] = $item['name'];
-        }
-        if (array_key_exists('grade', $details)
-        && array_key_exists('human', $details['grade'])
-        && array_key_exists($i, $details['grade']['items'])
-       	&& ($details['grade']['items'][$i]['key'] == $item['key'])
-        ) {
-	    $select = $details['grade']['items'][$i]['ratio'];
-            if (is_null($select)) {
-                $select = False;
-            }
-	    $weight = $details['grade']['items'][$i]['weight'];
-            $comment = $details['grade']['items'][$i]['comment'];
-            if (strlen($comment) == 0 && array_key_exists('comments', $details['grade']['tiems'][$i])) {
-                $comment = $details['grade']['items'][$i]['comments'];
-            }
-	} else {
-            $select = False;
-            $weight = $item['weight'];
-            $comment = '';
-        }
-        $items[] =  item_tag("$id|$i", $item, $select, $weight, $comment);
-    }
 }
 
 function hybrid_tree($details) {
@@ -239,39 +213,20 @@ function hybrid_tree($details) {
 	$details['grade'] = $details['grade_template'];
     }
     foreach($details['rubric']['human'] as $i=>$item) {
-        $sometimes_na = False;
-        $prompt_points = False;
-        if (!is_array($item)) {
-            $item = array('name' => $item, 'key' => $item, 'weight' => 1.0, 'type' => 'radio');
-        }
-        if (!array_key_exists('key', $item)) {
-            $item['key'] = $item['name'];
-        }
         if (array_key_exists('grade', $details)
         && array_key_exists('human', $details['grade'])
         && array_key_exists($i, $details['grade']['human'])
-       	&& ($details['grade']['human'][$i]['key'] == $item['key'] || $details['grade']['human'][$i]['name'] == $item['name'])
 	) {
-	    $select = $details['grade']['human'][$i]['ratio'];
-            if (is_null($select)) {
-                $select = False;
-            }
-	    $weight = $details['grade']['human'][$i]['weight'];
-            $comment = $details['grade']['human'][$i]['comment'];
-            if (strlen($comment) == 0 && array_key_exists('comments', $details['grade']['human'][$i])) {
-                $comment = $details['grade']['human'][$i]['comments'];
-            }
+            $grade_item = $details['grade']['human'][$i];
 	} else {
-            $select = False;
-            $weight = $item['weight'];
-            $comment = '';
+            $grade_item = NULL;
         }
-        $items[] =  item_tag("$id|$i", $item, $select, $weight, $comment);
+        $items[] =  item_tag("$id|$i", $item, $grade_item);
     }
     $items = implode("\n            ", $items);
     $adjust_section = get_adjust_section($id, $details);
     
-    $comment = (array_key_exists('grade', $details) && array_key_exists('comments', $details['grade'])) ? htmlspecialchars($details['grade']['comments']) : '';
+    $comments = (array_key_exists('grade', $details) && array_key_exists('comments', $details['grade'])) ? htmlspecialchars($details['grade']['comments']) : '';
     
     // FIXME: there is currently no way to handle .adjustment files from this interface
     
@@ -281,11 +236,44 @@ function hybrid_tree($details) {
         <div class='items' id='$id|items'>
             $items
         </div>
-        <div class='comment'><span>Comment:</span><textarea id='$id|comment'>$comment</textarea></div>
+        <div class='comments'><span>Comments:</span><textarea id='$id|comments'>$comments</textarea></div>
         <div class='hide-outer hidden'>
         $adjust_section
         </div>
     </div>";
+}
+
+function rubric_tree($details) {
+    $id = "$details[slug]|$details[student]";
+
+    $items = array();
+    if (!array_key_exists('grade', $details) && array_key_exists('grade_template', $details)) {
+	$details['grade'] = $details['grade_template'];
+    }
+    foreach($details['rubric']['items'] as $i=>$item) {
+        if (array_key_exists('grade', $details) {
+            $grade_item = $details['grade']['items'][$i];
+	} else {
+            $grade_item = NULL;
+        }
+        $items[] =  item_tag("$id|$i", $item, $grade_item);
+    }
+    $items = implode("\n            ", $items);
+    $adjust_section = get_adjust_section($id, $details);
+    
+    $comment = (array_key_exists('grade', $details) && array_key_exists('comments', $details['grade'])) ? htmlspecialchars($details['grade']['comments']) : '';
+    
+    
+    return "<div class='rubric' id='$id'>
+        <div class='items' id='$id|items'>
+            $items
+        </div>
+        <div class='comments'><span>Comments:</span><textarea id='$id|comments'>$comments</textarea></div>
+        <div class='hide-outer hidden'>
+        $adjust_section
+        </div>
+    </div>";
+}
 }
 
 
@@ -500,9 +488,9 @@ function _grade(id) {
     var ans = {};
     if (root.classList.contains('percentage')) {
         var correct = document.getElementById(id+'|percent').value;
-        var comment = document.getElementById(id+'|comment').value;
+        var comments = document.getElementById(id+'|comments').value;
         
-        correct = check_percent(correct, comment, root);
+        correct = check_percent(correct, comments, root);
         root.classList.remove('error');
 
         ans = {"kind":"percentage"
@@ -540,7 +528,7 @@ function _grade(id) {
             ans.human[num] = {name:name, ratio:value};
             x.parentElement.parentElement.classList.remove('error');
         });
-        document.getElementById(id).querySelectorAll('textarea[data-is-item-comment]').forEach(function(x){
+        document.getElementById(id).querySelectorAll('textarea[data-is-item-comments]').forEach(function(x){
             var num = x.name.split('|');
             var key = x.dataset.key;
             var name = x.dataset.name;
@@ -549,7 +537,7 @@ function _grade(id) {
             if (ans.human[num] == null) {
                 ans.human[num] = {name: name}
             }
-            ans.human[num]['comment'] = x.value;
+            ans.human[num]['comments'] = x.value;
             x.parentElement.parentElement.classList.remove('error');
         });
         var ok = true
@@ -559,27 +547,27 @@ function _grade(id) {
         }
         if (!ok) throw new Error('Missing some components');
 
-        var comment = document.getElementById(id+'|comment').value;
-        if (comment.length > 0) ans['comments'] = comment;
+        var comments = document.getElementById(id+'|comments').value;
+        if (comments.length > 0) ans['comments'] = comments;
     } else {
         alert('Grader script error: unexpected rubric kind '+JSON.stringify(root.classList));
     }
     var mult_correct = document.getElementById(id+'|mult|percent').value;
-    var mult_comment = document.getElementById(id+'|mult|comment').value;
+    var mult_comments= document.getElementById(id+'|mult|comments').value;
     if (mult_correct.length > 0) {
-        mult_correct = check_percent(mult_correct, mult_comment, document.getElementById(id+'|mult'));
+        mult_correct = check_percent(mult_correct, mult_comments, document.getElementById(id+'|mult'));
         ans['.mult'] = {"kind":"percentage"
                        ,"ratio":mult_correct/100
-                       ,"comments":mult_comment
+                       ,"comments":mult_comments
                        };
     }
     var sub_correct = document.getElementById(id+'|sub|percent').value;
-    var sub_comment = document.getElementById(id+'|sub|comment').value;
+    var sub_comments = document.getElementById(id+'|sub|comments').value;
     if (sub_correct.length > 0) {
-        sub_correct = check_percent(sub_correct, sub_comment, document.getElementById(id+'|sub'));
+        sub_correct = check_percent(sub_correct, sub_comments, document.getElementById(id+'|sub'));
         ans['.sub'] = {"kind":"percentage"
                        ,"portion":sub_correct/100
-                       ,"comments":sub_comment
+                       ,"comments":sub_comments
                        };
     }
     return ans;
