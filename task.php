@@ -349,7 +349,7 @@ if (array_key_exists('submitted', $_GET) && $_GET['submitted']) {
     die('</body></html>');
 }
 
-function _show_grade_rubric_items($items) {
+function _show_grade_rubric_items(&$ans, $items) {
     $total = 0;
     $total_denom = 0;
     foreach ($items as $entry) {
@@ -400,13 +400,12 @@ function show_grade($gradeobj) {
     $ans = array();
     $ans[] = "<small>as of ".date_format(date_create(), "Y-m-d H:i:s").":</small>";
     $any_null = false;
+    $ans[] = '<table class="feedback"><tbody>';
     if ($gradeobj['kind'] == 'percentage') {
-	$ans[] = '<table class="feedback"><tbody>';
 	$score = $gradeobj['ratio'];
     } else if ($gradeobj['kind'] == 'rubric') {
-        $score = _show_grade_rubric_items($gradeobj['items']);
+        $score = _show_grade_rubric_items($ans, $gradeobj['items']);
     } else if ($gradeobj['kind'] == 'hybrid') {
-	$ans[] = '<table class="feedback"><tbody>';
 
 	// correctness
 	if ($gradeobj['auto-weight'] > 0) {
@@ -422,10 +421,12 @@ function show_grade($gradeobj) {
 	} else { $score = 0; }
 
 	// staff feedback
-        $human_ratio = _show_grade_rubric_items($gradeobj['human']);
+        $human_ratio = _show_grade_rubric_items($ans, $gradeobj['human']);
         if ($human_ratio === NULL) {
             $any_null = true;
         }
+    } else {
+        user_error_msg('Internal issue with recorded grade (unhandled lind '.$gradeobj['kind'].')');
     }
     // comment
     if (array_key_exists('comments', $gradeobj)) {
