@@ -403,7 +403,9 @@ function show_grade($gradeobj) {
     if ($gradeobj['kind'] == 'percentage') {
 	$ans[] = '<table class="feedback"><tbody>';
 	$score = $gradeobj['ratio'];
-    } else {
+    } else if ($gradeobj['kind'] == 'rubric') {
+        $score = _show_grade_rubric_items($gradeobj['items']);
+    } else if ($gradeobj['kind'] == 'hybrid') {
 	$ans[] = '<table class="feedback"><tbody>';
 
 	// correctness
@@ -424,8 +426,6 @@ function show_grade($gradeobj) {
         if ($human_ratio === NULL) {
             $any_null = true;
         }
-    } else if ($gradeobj['kind'] == 'rubric') {
-        $score = _show_grade_rubric_items($gradeobj['items']);
     }
     // comment
     if (array_key_exists('comments', $gradeobj)) {
