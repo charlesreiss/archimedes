@@ -50,21 +50,21 @@ function percent_tag($id, $text, $percent, $comments) {
     </div>";
 }
 
-function item_tag($id, $rubric, $selected, $weight, $comments) {
-    if (!is_array($item)) {
-        $item = array('name' => $item, 'key' => $item, 'weight' => 1.0, 'type' => 'radio');
+function item_tag($id, $rubric, $grade_item) {
+    if (!is_array($rubric)) {
+        $rubric = array('name' => $rubric, 'key' => $rubric, 'weight' => 1.0, 'type' => 'radio');
     }
-    $select = False;
-    $weight = $item['weight']
+    $selected = False;
+    $weight = $rubric['weight'];
     $comments = '';
     if (!is_null($grade_item) && (
             !array_key_exists('key', $grade_item) || $grade_item['key'] == $rubric['key']
     )) {
-        $select = $grade_item['ratio']
-        if (is_null($select)) {
-            $select = False;
+        $selected = $grade_item['ratio'];
+        if (is_null($selected)) {
+            $selected = False;
         }
-        $weight = $grade_item['weight']
+        $weight = $grade_item['weight'];
         $comments = $details['grade']['human'][$i]['comments'];
     }
     $key = htmlspecialchars($rubric["key"]);
@@ -97,7 +97,7 @@ function item_tag($id, $rubric, $selected, $weight, $comments) {
         ";
         $result .= "</div>";
     } else {
-        $incomplete_p = $selected === False
+        $incomplete_p = $selected === False;
         if ($incomplete_p) {
             if ($weight == 0.0) {
                 $incomplete_class = "incomplete-optional";
@@ -145,7 +145,7 @@ function item_tag($id, $rubric, $selected, $weight, $comments) {
     if (!array_key_exists('suppress_comments', $rubric)) {
         $result .= "
             <div class='itemcomment'><label for='$id|comments'>Item comments:</label>
-            <textarea $data data-is-item-comments='yes' id='$id|comments'>$comment</textarea>
+            <textarea $data data-is-item-comments='yes' id='$id|comments'>$comments</textarea>
             </div>
         ";
     }
@@ -251,7 +251,7 @@ function rubric_tree($details) {
 	$details['grade'] = $details['grade_template'];
     }
     foreach($details['rubric']['items'] as $i=>$item) {
-        if (array_key_exists('grade', $details) {
+        if (array_key_exists('grade', $details)) {
             $grade_item = $details['grade']['items'][$i];
 	} else {
             $grade_item = NULL;
@@ -273,7 +273,6 @@ function rubric_tree($details) {
         $adjust_section
         </div>
     </div>";
-}
 }
 
 
@@ -542,6 +541,58 @@ function _grade(id) {
         });
         var ok = true
         for(var i=0; i<ans.human.length; i+=1) if (ans.human[i] === null) {
+            document.getElementById(id+'|items').children[i].classList.add('error');
+            ok = false;
+        }
+        if (!ok) throw new Error('Missing some components');
+
+        var comments = document.getElementById(id+'|comments').value;
+        if (comments.length > 0) ans['comments'] = comments;
+    } else if (root.classList.contains('rubric')) {
+        ans = {kind:'rubric', items:[]};
+
+        document.getElementById(id).querySelectorAll('input[type="radio"]').forEach(function(x){
+            var key = x.dataset.key;
+            var name = x.dataset.name;
+            var num = x.name.split('|');
+            num = Number(num[num.length-1]);
+            while (num >= ans.items.length) ans.items.push(null);
+            if (x.checked) {
+                if (x.value == "N/A") {
+                    console.log("found na for " + num);
+                    ans.items[num] = {ratio:0.0, weight:0.0, key:key, name:name};
+                } else {
+                    console.log("found " + x.value + " for " + num);
+                    ans.items[num] = {ratio:Number(x.value), key:key, name:name};
+                }
+                x.parentElement.parentElement.classList.remove('error');
+            }
+        });
+        document.getElementById(id).querySelectorAll('input[data-points-of]').forEach(function(x){
+            console.log('processing ' + x + ": " + x.dataset.pointsOf);
+            var num = x.name.split('|');
+            var key = x.dataset.key;
+            var name = x.dataset.name;
+            num = Number(num[num.length-1]);
+            while (num >= ans.items.length) ans.items.push(null);
+            var value = parseFloat(x.value) / parseFloat(x.dataset.pointsOf);
+            ans.items[num] = {name:name, ratio:value};
+            x.parentElement.parentElement.classList.remove('error');
+        });
+        document.getElementById(id).querySelectorAll('textarea[data-is-item-comments]').forEach(function(x){
+            var num = x.name.split('|');
+            var key = x.dataset.key;
+            var name = x.dataset.name;
+            num = Number(num[num.length-1]);
+            while (num >= ans.items.length) ans.items.push(null);
+            if (ans.items[num] == null) {
+                ans.items[num] = {name: name}
+            }
+            ans.items[num]['comments'] = x.value;
+            x.parentElement.parentElement.classList.remove('error');
+        });
+        var ok = true
+        for(var i=0; i<ans.items.length; i+=1) if (ans.items[i] === null) {
             document.getElementById(id+'|items').children[i].classList.add('error');
             ok = false;
         }
