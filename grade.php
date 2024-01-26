@@ -65,7 +65,7 @@ function item_tag($id, $rubric, $grade_item) {
             $selected = False;
         }
         $weight = $grade_item['weight'];
-        $comments = $details['grade']['human'][$i]['comments'];
+        $comments = $grade_item['comments'];
     }
     $key = htmlspecialchars($rubric["key"]);
     $name = htmlspecialchars($rubric["name"]);
