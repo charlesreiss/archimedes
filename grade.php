@@ -65,7 +65,9 @@ function item_tag($id, $rubric, $grade_item) {
             $selected = False;
         }
         $weight = $grade_item['weight'];
-        $comments = $grade_item['comments'];
+        if (array_key_exists('comments', $grade_item)) {
+            $comments = $grade_item['comments'];
+        }
     }
     $key = htmlspecialchars($rubric["key"]);
     $name = htmlspecialchars($rubric["name"]);
@@ -261,7 +263,7 @@ function rubric_tree($details) {
     $items = implode("\n            ", $items);
     $adjust_section = get_adjust_section($id, $details);
     
-    $comment = (array_key_exists('grade', $details) && array_key_exists('comments', $details['grade'])) ? htmlspecialchars($details['grade']['comments']) : '';
+    $comments = (array_key_exists('grade', $details) && array_key_exists('comments', $details['grade'])) ? htmlspecialchars($details['grade']['comments']) : '';
     
     
     return "<div class='rubric' id='$id'>
