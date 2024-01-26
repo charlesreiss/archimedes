@@ -87,7 +87,7 @@ if ($isfaculty && array_key_exists('extension_decision', $_POST)) {
         if (file_exists($reqfile)) {
             $chatter[] = student_chat_message(
                 $_POST['extension_student'],
-                file_get_contents($regfile),
+                file_get_contents($reqfile),
                 'extension'
             );
             unlink($reqfile);
