@@ -311,13 +311,15 @@ function student_screen($slug, $student, $nof='') {
     if (array_key_exists('.chat', $details) || array_key_exists('.regrade-req', $details)) {
         $rg = array("<div class='group conversation'><div>Regrade conversation:</div>");
         $keep = False;
-        foreach($details['.chat'] as $note) if ($note['kind'] == 'regrade') {
-            $keep = True;
-            $rg[] = '<pre class="';
-            $rg[] = $note['user'] == $student ? 'request' : 'response';
-            $rg[] = '">';
-            $rg[] =  htmlspecialchars($note['msg']);
-            $rg[] = "</pre>";
+        if (array_key_exists('.chat', $details)) {
+            foreach($details['.chat'] as $note) if ($note['kind'] == 'regrade') {
+                $keep = True;
+                $rg[] = '<pre class="';
+                $rg[] = $note['user'] == $student ? 'request' : 'response';
+                $rg[] = '">';
+                $rg[] =  htmlspecialchars($note['msg']);
+                $rg[] = "</pre>";
+            }
         }
         if (array_key_exists('.regrade-req', $details)) {
             $keep = True;

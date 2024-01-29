@@ -1323,8 +1323,8 @@ function add_chat($assignment, $student, $messages) {
     $chatfile = "uploads/$assignment/$student/.chat";
     if (file_exists($chatfile)) $chatter = json_decode(file_get_contents($chatfile), true);
     else $chatter = array();
-    array_push($chtter, ...$messages);
-        file_put($chatfile, json_encode($chatter)) || die('failed to record decision (may be server permission error?)');
+    array_push($chatter, ...$messages);
+    file_put($chatfile, json_encode($chatter)) || die('failed to record decision (may be server permission error?)');
 }
 
 function student_chat_message($student, $message, $kind) {
@@ -1338,7 +1338,7 @@ function student_chat_message($student, $message, $kind) {
 
 function staff_chat_message($message, $kind) {
     global $realme, $me, $user, $realuser;
-    if (hasStaffRule($me)) {
+    if (hasStaffRole($me)) {
         $use_user = $user;
         $use_me = $me;
     } else {
@@ -1346,7 +1346,7 @@ function staff_chat_message($message, $kind) {
         $use_me = $realme;
     }
     return array(
-        'user' => $ruse_user,
+        'user' => $use_user,
         'show' => $use_me['name'],
         'kind' => $kind,
         'msg' => $message
