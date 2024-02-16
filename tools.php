@@ -1215,7 +1215,7 @@ function sync_rubric_items_for_grade_items($grade_items, $rubric_items) {
     $is_incomplete = FALSE;
     if (count($grade_items) != count($rubric_items)) die('wrong number of entries in human grading');
     foreach($rubric_items as $i=>$val) {
-        if (!is_array($val)) $val = array('weight'=>1, 'key'=>$val, 'name'=>$val);
+        if (!is_array($val)) $val = array('key'=>$val, 'name'=>$val);
         if (array_key_exists('key', $grade_items[$i])) {
             if ($grade_items[$i]['key'] != $val['key']) die('rubric has changed' . $val['key'] . 'versus' . $grade_items[$i]['key']);
         } else {
@@ -1261,8 +1261,11 @@ function sync_rubric_for_grade($grade) {
             $grade['auto'] = 0;
         }
         sync_rubric_items_for_grade_items($grade['human'], $rub['human']);
-    } else if ($kind == 'rubric') {
-        sync_rubric_items_for_grade_items($grade['human'], $rub['human']);
+    } else if ($grade['kind'] == 'rubric') {
+        sync_rubric_items_for_grade_items($grade['items'], $rub['items']);
+    } else if ($grade['kind'] == 'percentage') {
+    } else {
+        user_error_msg('unknown kind '.$kind);
     }
 }
 

@@ -90,7 +90,7 @@ function item_tag($id, $rubric, $grade_item) {
         return $result;
     } else if ($type == "points") { 
         if ($selected !== False) {
-            $value = $selected * $weight;
+            $value = $selected * $rubric_weight;
         } else {
             $value = "";
         }
@@ -626,6 +626,18 @@ function _grade(id) {
                        };
     }
     return ans;
+}
+
+function handleGradeResponse(text) {
+    try {
+        data = JSON.parse(text);
+        if (data['success']) {
+        } else {
+            alert('error sending grade: ' + data);
+        }
+    } catch (error) {
+        alert('error sending grade: ' + text)
+    }
 }
 
 /** Callback for the "submit grade" button: tell the server, hide the student, and ask for new comments */
