@@ -1211,7 +1211,7 @@ function score_of_task($details) {
     return $score;
 }
 
-function sync_rubric_items_for_grade_items($grade_items, $rubric_items) {
+function sync_rubric_items_for_grade_items(&$grade_items, $rubric_items) {
     $is_incomplete = FALSE;
     if (count($grade_items) != count($rubric_items)) die('wrong number of entries in human grading');
     foreach($rubric_items as $i=>$val) {
@@ -1223,7 +1223,7 @@ function sync_rubric_items_for_grade_items($grade_items, $rubric_items) {
                 die('rubric has changed');
             }
         }
-        if (!array_key_exists('weight', $grade_items[$i])) {
+        if (array_key_exists('weight', $val)) {
             $grade_items[$i]['weight'] = $val['weight'];
         }
         if (array_key_exists('type', $val)) {
@@ -1243,7 +1243,7 @@ function sync_rubric_items_for_grade_items($grade_items, $rubric_items) {
     return $is_incomplete;
 }
 
-function sync_rubric_for_grade($grade) {
+function sync_rubric_for_grade(&$grade) {
     $is_incomplete = FALSE;
     $rub = rubricOf($grade['slug']);
     if ($rub['kind'] != $grade['kind'])
