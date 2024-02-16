@@ -1260,9 +1260,9 @@ function sync_rubric_for_grade(&$grade) {
         } else {
             $grade['auto'] = 0;
         }
-        sync_rubric_items_for_grade_items($grade['human'], $rub['human']);
+        return sync_rubric_items_for_grade_items($grade['human'], $rub['human']);
     } else if ($grade['kind'] == 'rubric') {
-        sync_rubric_items_for_grade_items($grade['items'], $rub['items']);
+        return sync_rubric_items_for_grade_items($grade['items'], $rub['items']);
     } else if ($grade['kind'] == 'percentage') {
     } else {
         user_error_msg('unknown kind '.$kind);
