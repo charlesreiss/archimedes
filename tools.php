@@ -658,7 +658,7 @@ function studentFileTag($path, $classes='left') {
         if (stripos($mime, 'image') !== FALSE) {
             return "<a href='$link' target='_blank'><img class='$classes width height' src='$link'/></a><br/><input type='button' value='toggle image visibility' onclick='e=this.previousSibling.previousSibling; e.setAttribute(\"style\", e.getAttribute(\"style\") ? \"\" : \"display:none\")'/>";
             //  return "<a href='$link' target='_blank'><img class='$classes width height' src='$link'/></a>";
-        } else if (stripos($mime, 'text') !== FALSE && filesize($path) < 64 * 1024) {
+        } else if (stripos($mime, 'text') !== FALSE && filesize($path) < 256 * 1024) {
             $contents = file_get_contents($path);
             $contents = preg_replace('/[^\n\r \t!-~]/', '', $contents);
             $default_display = filesize($path) > 64 * 1024 ? " style='display:none'" : "";
