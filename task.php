@@ -773,9 +773,9 @@ if ($submittable) {
 	    }
 	    $penalty = $late_policy[$late_days];
 	    $penalty_percent = floor($penalty * 100.0);
-	    echo ", though it is now late (estimated $penalty_percent% credit for $late_days_p1 day late submission)";
+	    echo ", though it would be late (estimated $penalty_percent% credit for $late_days_p1 day late submission)";
 	} else {
-	    echo ", though it is now late (see the course syllabus for what that means)";
+	    echo ", though it would be late (see the course syllabus for what that means)";
 	}
     }
     echo ":</p>";
