@@ -118,10 +118,12 @@ function item_tag($id, $rubric, $grade_item) {
             $options = [[1.0, "1"], [0.5, "½"], [0.0, "0"]];
         }
         $sometimes_na = array_key_exists('sometimes_na', $rubric) && $rubric['sometimes_na'];
+        $found_option = false;
         foreach ($options as $option) {
             $cur_selected = (($selected == $option[0]) && ($selected !== False));
             if ($cur_selected) {
                 $checked = "checked='checked' ";
+                $found_option = true;
             } else {
                 $checked = "";
             }
@@ -133,6 +135,9 @@ function item_tag($id, $rubric, $grade_item) {
             }
             $cur_text = $option[1];
             $result.= "<label class='$cur_class'><input type='radio' $data value='$option[0]' $checked>$cur_text</label>\n";
+        }
+        if (!$found_option && $selected !== False) {
+            $result.= "<label class='partial'><input type='radio' $data value='$selected' checked='checked'>".int($cur_text * 100)."%</label>\n";
         }
         if ($sometimes_na !== False) {
             $cur_checked = '';
