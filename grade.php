@@ -137,7 +137,7 @@ function item_tag($id, $rubric, $grade_item) {
             $result.= "<label class='$cur_class'><input type='radio' $data value='$option[0]' $checked>$cur_text</label>\n";
         }
         if (!$found_option && $selected !== False) {
-            $result.= "<label class='partial'><input type='radio' $data value='$selected' checked='checked'>".int($cur_text * 100)."%</label>\n";
+            $result.= "<label class='partial'><input type='radio' $data value='$selected' checked='checked'>".(int)($selected * 100)."%</label>\n";
         }
         if ($sometimes_na !== False) {
             $cur_checked = '';
