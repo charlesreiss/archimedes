@@ -1270,6 +1270,7 @@ function sync_rubric_for_grade(&$grade) {
 }
 
 function record_grade($details, $grade) {
+    global $user;
     $is_incomplete = FALSE;
     # preserve hidden information
     if (array_key_exists('grade', $details)) {

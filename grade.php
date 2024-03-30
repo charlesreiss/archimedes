@@ -110,7 +110,7 @@ function item_tag($id, $rubric, $grade_item) {
             $incomplete_class = "";
         }
         $result = "<div class='item ". $incomplete_class ."'>";
-        $options = [[1.0, "1"], [0.75, "¾"], [0.5, "½"], [0.25, "¼"], [0.0, "0"]];
+        $options = [[1.0, "1"], [0.8, "⅘"], [0.75, "¾"], [0.5, "½"], [0.25, "¼"], [0.2, "⅕"], [0.0, "0"]];
         if ($type == "radio3") {
             $options = [[1.0, "1"], [0.5, "½"], [0.0, "0"]];
         }
@@ -498,7 +498,7 @@ function _grade(id) {
 
         ans = {"kind":"percentage"
                ,"ratio":correct/100
-               ,"comments":comment
+               ,"comments":comments
                };
     } else if (root.classList.contains('hybrid')) {
         ans = {kind:'hybrid', human:[]};
@@ -911,7 +911,7 @@ if (array_key_exists('assignment', $_REQUEST)) {
         if ($redo == 'review' && $grader) {
             $list = toGrade($slug, $grader, $redo);
             $count = count($list); 
-            echo "<h2>For $slug, you graded $count submissions (most recent first):</h2><ul class='linklist'>";
+            echo "<h2>For $slug, $grader graded $count submissions (most recent first):</h2><ul class='linklist'>";
             foreach(array_reverse($list) as $student) {
                 $stud = fullRoster()[$student];
                 echo "<li><a href='?assignment=$slug&student=$student'>$stud[name] ($student)</a>";
@@ -1007,6 +1007,8 @@ if (array_key_exists('assignment', $_REQUEST)) {
             }
             echo "</li>";
         }
+        if (file_exists("users/.graded/$user/$slug"))
+             echo "; review <a href='?assignment=$slug&grader=$user&redo=review'>submissions you graded</a>";
         echo "</li>";
     }
     echo '</ul>';
