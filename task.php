@@ -447,11 +447,6 @@ function show_grade($gradeobj) {
 	$aw = array_key_exists('auto-weight', $gradeobj) ? $gradeobj['auto-weight'] : 0.5;
 	$score = $human/$human_denom*(1-$aw) + $score*$aw;
     }
-    if (array_key_exists('.sub', $gradeobj)) {
-        // (with subtraction)
-        _show_grade_obj_row($ans, $gradeobj['.sub']['portion'], $gradeobj['.sub']['comments'], true, '- ');
-        $score -= $gradeobj['.sub']['portion'];
-    }
     if (array_key_exists('.mult', $gradeobj) && $score > 0.0) {
         // (with multiplier)
         _show_grade_obj_row($ans, $gradeobj['.mult']['ratio'], $gradeobj['.mult']['comments'], true, '× ');
@@ -461,6 +456,11 @@ function show_grade($gradeobj) {
         // (with multiplier)
         _show_grade_obj_row($ans, $gradeobj['.adjustment']['mult'], $gradeobj['.adjustment']['comments'], true, '× ');
         $score *= $gradeobj['.adjustment']['mult'];
+    }
+    if (array_key_exists('.sub', $gradeobj)) {
+        // (with subtraction)
+        _show_grade_obj_row($ans, $gradeobj['.sub']['portion'], $gradeobj['.sub']['comments'], true, '- ');
+        $score -= $gradeobj['.sub']['portion'];
     }
     if ($any_null) {
         $score = null;
