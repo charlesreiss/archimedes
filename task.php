@@ -781,6 +781,7 @@ if ($submittable) {
     echo ":</p>";
     #echo csrf_token_html();
     echo "<center><input type='file' multiple='multiple' name='submission[]'/><input type='submit' name='upload' value='Upload file(s)'/></center></form>";
+    echo "<p><small>(You should be able to drag-and-drop files in addition to using the file chooser above.)</small></p>";
 }
 
 
