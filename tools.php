@@ -391,6 +391,7 @@ function hasStaffRole($me) {
         || stripos($me['role'], 'instruct') !== False
         || stripos($me['role'], 'teach') !== False
         || $me['role'] == 'TA'
+        || $me['role'] == 'Ta'
     );
 }
 
