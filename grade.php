@@ -989,6 +989,7 @@ if (array_key_exists('assignment', $_REQUEST)) {
     if ($issuperuser) {
         echo "<center><em>$me[name] has super-grader rights; showing open assignments and spot-check interface</em></center>";
     }
+    echo '<p><form>Grade '.assignmentDropdown('assignment').' for '.studentDropdown('student') . '<input type=submit value=Go></form></p>';
     echo '<h2>Pick an assignment:</h2>';
     echo '<ul class="linklist">';
     foreach($options as $slug=>$stats) {
