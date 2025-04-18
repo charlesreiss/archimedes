@@ -665,7 +665,7 @@ function grade(id) {
         ans.regrade = rg.value;
     }
 
-    ajax(ans, 'addgrade=1&asuser=<?=$user?>'); // FIX ME: add checking of response code
+    ajax(ans, 'addgrade=1&asuser=<?=$user?>', handleGradeResponse, handleGradeResponse); // FIX ME: add checking of response code
     document.getElementById("table|"+id).classList.add('done');
 }
 
@@ -683,7 +683,7 @@ function respond_to_regrade(id) {
         ans.regrade = rg.value;
     }
 
-    ajax(ans, 'respondtoregrade=1&asuser=<?=$user?>'); // FIX ME: add checking of response code
+    ajax(ans, 'respondtoregrade=1&asuser=<?=$user?>', handleGradeResponse, handleGradeResponse); // FIX ME: add checking of response code
     document.getElementById("table|"+id).classList.add('done');
 }
 
