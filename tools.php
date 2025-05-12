@@ -396,7 +396,7 @@ function hasStaffRole($me) {
 }
 
 /**
- * Handles Netbadge (PHP_AUTH_USER), identifying staff, and ?asuser=mst3k.
+ * Handles Netbadge (REMOTE_USER), identifying staff, and ?asuser=mst3k.
  * Sets global variables: $user (a computing ID); $me (an array of information);
  * $isself, $isstaff, and $isfaculty (booleans).
  */
@@ -404,8 +404,8 @@ function logInAs($compid=false, $initial=true) {
     global $user, $me, $isstaff, $isself, $isfaculty, $realuser, $realme;
     if ($compid !== false) {
         $user = $compid;
-    } else if (array_key_exists('PHP_AUTH_USER', $_SERVER)) {
-        $user = $_SERVER['PHP_AUTH_USER'];
+    } else if (array_key_exists('REMOTE_USER', $_SERVER)) {
+        $user = $_SERVER['REMOTE_USER'];
     } else {
         preFeedback("ERROR: you don't appear to be authenticated with NetBadge.");
         var_dump($_SERVER);
@@ -425,7 +425,7 @@ function logInAs($compid=false, $initial=true) {
             preFeedback("ERROR: user $user is not in our roster.");
         }
         leavePre();
-        if (array_key_exists('PHP_AUTH_USER', $_SERVER) && $_SERVER['PHP_AUTH_USER'] != $user) {
+        if (array_key_exists('REMOTE_USER', $_SERVER) && $_SERVER['REMOTE_USER'] != $user) {
             echo "<p><a href=\"$_SERVER[SCRIPT_NAME]\">Return to site as yourself.</a></p>\n";
         }
         die("</body></html>\n");
