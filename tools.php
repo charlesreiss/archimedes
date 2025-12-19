@@ -661,7 +661,7 @@ function studentFileTag($path, $classes='left') {
             //  return "<a href='$link' target='_blank'><img class='$classes width height' src='$link'/></a>";
         } else if (stripos($mime, 'text') !== FALSE && filesize($path) < 256 * 1024) {
             $contents = file_get_contents($path);
-            $contents = preg_replace('/[^\n\r \t!-~]/', '', $contents);
+            #$contents = preg_replace('/[^\n\r \t!-~]/', '', $contents);
             $default_display = filesize($path) > 64 * 1024 ? " style='display:none'" : "";
             return "<div class='$classes width'>File <a href='$link' target='_blank'><tt>$title</tt></a>: <input type='button' style='font-family:monospace' value='toggle visibility' onclick='e=this.nextSibling; e.setAttribute(\"style\", e.getAttribute(\"style\") ? \"\" : \"display:none\")'/><pre$default_display><code>" . htmlspecialchars($contents) . "</code></pre></div>";
         } else if (is_dir($path)) {
