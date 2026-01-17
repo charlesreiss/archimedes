@@ -352,6 +352,7 @@ if (array_key_exists('submitted', $_GET) && $_GET['submitted']) {
 function _show_grade_rubric_items(&$ans, $items) {
     $total = 0;
     $total_denom = 0;
+    $any_null = false;
     foreach ($items as $entry) {
         $r = $entry['ratio'];
         if ($entry['weight'] == 0.0 && (array_key_exists('sometimes_na', $entry))) {
@@ -363,9 +364,9 @@ function _show_grade_rubric_items(&$ans, $items) {
         $total += $entry['weight'] * $r;
         $total_denom += $entry['weight'];
         if (array_key_exists('type', $entry)) {
-            $type = 'normal';
-        } else {
             $type = $entry['type'];
+        } else {
+            $type = 'normal';
         }
         if ($type == 'points' || $type == 'score') {
             _show_grade_obj_points($ans, $r, $entry['weight'], $entry['name']);
