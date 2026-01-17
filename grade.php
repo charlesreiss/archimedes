@@ -80,12 +80,12 @@ function item_tag($id, $rubric, $grade_item) {
     }
     $data = "data-key='$key' data-name='$name' name='$id' data-weight='$weight' data-current-weight='$weight' data-current-selected='$selected'";
     if ($type == "comments" || $type == 'comment') {
-        $result = "<div class='item'>
+        $result = "<div class='item' id='$id|itemdiv'>
             <label for='$id'>$name</label>:
             </div>
         ";
         $result .= "
-            <div class='itemcomments'><label for='$id|comments'>Comments:</label>
+            <div class='itemcomments' id='$id'><label for='$id|comments'>Comments:</label>
             <textarea $data data-is-item-comments='yes' id='$id|comments'>$comments</textarea>
             </div>
         ";
@@ -96,7 +96,7 @@ function item_tag($id, $rubric, $grade_item) {
         } else {
             $value = "";
         }
-        $result = "<div class='item'>
+        $result = "<div class='item' id='$id|itemdiv'>
             <label for='$id'>$name</label>: <input type='text' $data data-points-of='$rubric_weight' value='$value'> of $rubric_weight
         ";
         $result .= "</div>";
@@ -111,7 +111,7 @@ function item_tag($id, $rubric, $grade_item) {
         } else {
             $incomplete_class = "";
         }
-        $result = "<div class='item ". $incomplete_class ."'>";
+        $result = "<div class='item ". $incomplete_class ."' id='$id|itemdiv'>";
         $options = [[1.0, "1"],  [0.75, "¾"], [0.5, "½"], [0.25, "¼"], [0.0, "0"]];
         if ($type == "radio7") {
             $options = [[1.0, "1"], [0.8, "⅘"], [0.75, "¾"], [0.5, "½"], [0.25, "¼"], [0.2, "⅕"], [0.0, "0"]];
@@ -156,7 +156,7 @@ function item_tag($id, $rubric, $grade_item) {
     }
     if (!array_key_exists('suppress_comments', $rubric)) {
         $result .= "
-            <div class='itemcomment'><label for='$id|comments'>Item comments:</label>
+            <div class='itemcomment' class='$id|commentdiv'><label for='$id|comments'>Item comments:</label>
             <textarea $data data-is-item-comments='yes' id='$id|comments'>$comments</textarea>
             </div>
         ";
@@ -591,7 +591,7 @@ function _grade(id, allowPartial) {
         });
         var ok = true
         for(var i=0; i<ans.human.length; i+=1) if (ans.human[i] === null) {
-            document.getElementById(id+'|items').children[i].classList.add('error');
+            document.getElementById(id+'|'+i+'|itemdiv').classList.add('error');
             ok = false;
         }
         if (!ok) throw new Error('Missing some components');
@@ -641,9 +641,13 @@ function _grade(id, allowPartial) {
         });
         var ok = true
         if (!allowPartial) {
+            console.log('checking '+ans.items);
             for(var i=0; i<ans.items.length; i+=1) if (ans.items[i] === null || ans.items[i].ratio === null) {
-                document.getElementById(id+'|items').children[i].classList.add('error');
+                document.getElementById(id+'|'+i+'|itemdiv').classList.add('error');
+                console.log(i + ": set error");
                 ok = false;
+            } else {
+                console.log(i + " is okay");
             }
         }
         if (!ok) throw new Error('Missing some components');
