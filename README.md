@@ -342,7 +342,7 @@ However, it should be fairly straightforward to port to other systems:
     This code assumes an Apache module that,
     on a correctly configured system, interfaces with UVA's NetBadge system,
     rejects those not authenticated,
-    and sets `$_SERVER['PHP_AUTH_USER']` prior to loading any `.php` scripts.
+    and sets `$_SERVER['REMOTE_USER']` prior to loading any `.php` scripts.
     However, it is also written to isolate that dependence into a single function:
     `logInAs` in `tools.php`, which is always invoked with no arguments except internally by `logInAs` itself.
     Modifying that function should allow it to work with any other log-in system.

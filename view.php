@@ -46,6 +46,7 @@ if (($isstaff && $isself) && strpos($path, 'support') === 0) $path = "meta/$path
 else $path = "uploads/$path";
 
 if ($path == "uploads/final/$user/key.pdf") { # XXX: weird special case
+} else if ($path == "uploads/midterm/$user/key.pdf") { # XXX: weird special case
 } else {
     if (realpath($path) != getcwd()."/$path") die('Invalid file name</body></html>');
     if (basename($path)[0] == '.') die('Invalid file name</body></html>');

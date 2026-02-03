@@ -60,7 +60,9 @@ function item_tag($id, $rubric, $grade_item) {
     if (!is_null($grade_item) && (
             !array_key_exists('key', $grade_item) || $grade_item['key'] == $rubric['key']
     )) {
-        $selected = $grade_item['ratio'];
+        if (array_key_exists('ratio', $grade_item)) {
+            $selected = $grade_item['ratio'];
+        }
         if (is_null($selected)) {
             $selected = False;
         }
@@ -78,12 +80,12 @@ function item_tag($id, $rubric, $grade_item) {
     }
     $data = "data-key='$key' data-name='$name' name='$id' data-weight='$weight' data-current-weight='$weight' data-current-selected='$selected'";
     if ($type == "comments" || $type == 'comment') {
-        $result = "<div class='item'>
+        $result = "<div class='item' id='$id|itemdiv'>
             <label for='$id'>$name</label>:
             </div>
         ";
         $result .= "
-            <div class='itemcomments'><label for='$id|comments'>Comments:</label>
+            <div class='itemcomments' id='$id'><label for='$id|comments'>Comments:</label>
             <textarea $data data-is-item-comments='yes' id='$id|comments'>$comments</textarea>
             </div>
         ";
@@ -94,7 +96,7 @@ function item_tag($id, $rubric, $grade_item) {
         } else {
             $value = "";
         }
-        $result = "<div class='item'>
+        $result = "<div class='item' id='$id|itemdiv'>
             <label for='$id'>$name</label>: <input type='text' $data data-points-of='$rubric_weight' value='$value'> of $rubric_weight
         ";
         $result .= "</div>";
@@ -109,7 +111,7 @@ function item_tag($id, $rubric, $grade_item) {
         } else {
             $incomplete_class = "";
         }
-        $result = "<div class='item ". $incomplete_class ."'>";
+        $result = "<div class='item ". $incomplete_class ."' id='$id|itemdiv'>";
         $options = [[1.0, "1"],  [0.75, "¾"], [0.5, "½"], [0.25, "¼"], [0.0, "0"]];
         if ($type == "radio7") {
             $options = [[1.0, "1"], [0.8, "⅘"], [0.75, "¾"], [0.5, "½"], [0.25, "¼"], [0.2, "⅕"], [0.0, "0"]];
@@ -154,7 +156,7 @@ function item_tag($id, $rubric, $grade_item) {
     }
     if (!array_key_exists('suppress_comments', $rubric)) {
         $result .= "
-            <div class='itemcomment'><label for='$id|comments'>Item comments:</label>
+            <div class='itemcomment' class='$id|commentdiv'><label for='$id|comments'>Item comments:</label>
             <textarea $data data-is-item-comments='yes' id='$id|comments'>$comments</textarea>
             </div>
         ";
@@ -293,6 +295,35 @@ function grading_tree($details) {
     return "<div class='big error'><h1>Error!</h1>Unsupported rubric kind: ".$details['rubric']['kind']."</div>";
 }
 
+function _compare_timestamps($a, $b) {
+    if ($a['timestamp'] < $b['timestamp']) {
+        return -1;
+    } else if ($a['timestamp'] > $b['timestamp']) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+function history_section($slug, $student) {
+    $history = get_grade_history_for_student($slug, $student);
+    $result = '';
+    if (count($history) > 0) {
+        $result .= '<div class="history">Grading history:<ul>';
+        usort($history, '_compare_timestamps');
+        foreach ($history as $previous) {
+            $result .= '<li>';
+            if ($previous['incomplete']) {
+                $result .= 'partially ';
+            }
+            $result .=  'graded by '.$previous['grader'].' at '.
+                date_format(date_create("@".$previous['timestamp']), "Y-m-d h:i")."</li>\n";
+        }
+        $result .= '</ul></div>';
+    }
+    return $result;
+}
+
 function student_screen($slug, $student, $nof='') {
     $details = asgn_details($student, $slug);
     
@@ -314,6 +345,7 @@ function student_screen($slug, $student, $nof='') {
             if ($other != $student) {
                 $names[] = fullRoster()[$other]['name'] . " (<a href='task.php?task=$slug&asuser=$other' target='_blank'>$other</a>)";
             }
+
 
     // regrade conversation
     if (array_key_exists('.chat', $details) || array_key_exists('.regrade-req', $details)) {
@@ -366,7 +398,7 @@ function student_screen($slug, $student, $nof='') {
         $secret = "<textarea class='display' disabled='disabled'>$fb</textarea>$secret";
         
     }
-    
+
     // assemble
     return implode('', array(
         "<table class='table-columns' id='table|$slug|$student'><tbody><tr><td>",
@@ -375,10 +407,15 @@ function student_screen($slug, $student, $nof='') {
         "<div class='student name'>",
         implode(' and ', $names),
         " $nof</div>$rg",
+        history_section($slug, $student),
         grading_tree($details),
         "<input type='button' value='submit grade' onclick='grade(",
         json_encode("$slug|$student"),
-        ")'/><input type='button' value='skip' onclick='skip(",
+        ",false)'/>",
+        "<input type='button' value='submit partial grade' onclick='grade(",
+        json_encode("$slug|$student"),
+        ",true)'/>",
+        "<input type='button' value='skip' onclick='skip(",
         json_encode("$slug|$student"),
         ")'/></div><hr/>$secret</td></tr></tbody></table>",
     ));
@@ -404,6 +441,7 @@ header('Content-Type: text/html; charset=utf-8');
         .viewer.name:before { content:"checked out for grading by: "; font-size:70.71%; opacity:0.7071; } 
         .viewer.name { background: yellow; }
         .name { opacity:0.7071; } 
+        .history {font-size: 50%;}
 
 dd { margin-left:1em; }
 
@@ -478,7 +516,7 @@ function setUpCollapses() {
 }
 
 /** parses the HTML dom to figure out what the actual grade JSON ought to be */
-function _grade(id) {
+function _grade(id, allowPartial) {
     var root = document.getElementById(id);
     
     function check_percent(val, com, element) {
@@ -553,7 +591,7 @@ function _grade(id) {
         });
         var ok = true
         for(var i=0; i<ans.human.length; i+=1) if (ans.human[i] === null) {
-            document.getElementById(id+'|items').children[i].classList.add('error');
+            document.getElementById(id+'|'+i+'|itemdiv').classList.add('error');
             ok = false;
         }
         if (!ok) throw new Error('Missing some components');
@@ -581,7 +619,6 @@ function _grade(id) {
             }
         });
         document.getElementById(id).querySelectorAll('input[data-points-of]').forEach(function(x){
-            console.log('processing ' + x + ": " + x.dataset.pointsOf);
             var num = x.name.split('|');
             var key = x.dataset.key;
             var name = x.dataset.name;
@@ -598,15 +635,20 @@ function _grade(id) {
             num = Number(num[num.length-1]);
             while (num >= ans.items.length) ans.items.push(null);
             if (ans.items[num] == null) {
-                ans.items[num] = {name: name}
+                ans.items[num] = {name: name, ratio: null}
             }
             ans.items[num]['comments'] = x.value;
-            x.parentElement.parentElement.classList.remove('error');
         });
         var ok = true
-        for(var i=0; i<ans.items.length; i+=1) if (ans.items[i] === null) {
-            document.getElementById(id+'|items').children[i].classList.add('error');
-            ok = false;
+        if (!allowPartial) {
+            console.log('checking '+ans.items);
+            for(var i=0; i<ans.items.length; i+=1) if (ans.items[i] === null || ans.items[i].ratio === null) {
+                document.getElementById(id+'|'+i+'|itemdiv').classList.add('error');
+                console.log(i + ": set error");
+                ok = false;
+            } else {
+                console.log(i + " is okay");
+            }
         }
         if (!ok) throw new Error('Missing some components');
 
@@ -649,13 +691,13 @@ function handleGradeResponse(text) {
 }
 
 /** Callback for the "submit grade" button: tell the server, hide the student, and ask for new comments */
-function grade(id) {
+function grade(id, allowPartial) {
     var ans = {
         grader:"<?=$user?>", 
         slug:id.split('|',2)[0], 
         student:id.split('|',3)[1],
     }
-    var tmp = _grade(id);
+    var tmp = _grade(id, allowPartial);
     for(var key in tmp) ans[key] = tmp[key];
     
     var rg = document.getElementById(id+"|regrade");
@@ -1014,10 +1056,10 @@ if (array_key_exists('assignment', $_REQUEST)) {
                 if ($stats['ungraded'] > 24) echo " or <a class='ungraded' href='?assignment=$slug&grader=all&limit=24'>two</a>";
                 echo ")";
             }
-            echo "</li>";
         }
         if (file_exists("users/.graded/$user/$slug"))
              echo "; review <a href='?assignment=$slug&grader=$user&redo=review'>submissions you graded</a>";
+        echo "; view <a href='gradestats.php?assignment=$slug'>who graded how much</a>";
         echo "</li>";
     }
     echo '</ul>';

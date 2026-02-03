@@ -396,7 +396,7 @@ function hasStaffRole($me) {
 }
 
 /**
- * Handles Netbadge (PHP_AUTH_USER), identifying staff, and ?asuser=mst3k.
+ * Handles Netbadge (REMOTE_USER), identifying staff, and ?asuser=mst3k.
  * Sets global variables: $user (a computing ID); $me (an array of information);
  * $isself, $isstaff, and $isfaculty (booleans).
  */
@@ -404,8 +404,8 @@ function logInAs($compid=false, $initial=true) {
     global $user, $me, $isstaff, $isself, $isfaculty, $realuser, $realme;
     if ($compid !== false) {
         $user = $compid;
-    } else if (array_key_exists('PHP_AUTH_USER', $_SERVER)) {
-        $user = $_SERVER['PHP_AUTH_USER'];
+    } else if (array_key_exists('REMOTE_USER', $_SERVER)) {
+        $user = $_SERVER['REMOTE_USER'];
     } else {
         preFeedback("ERROR: you don't appear to be authenticated with NetBadge.");
         var_dump($_SERVER);
@@ -425,7 +425,7 @@ function logInAs($compid=false, $initial=true) {
             preFeedback("ERROR: user $user is not in our roster.");
         }
         leavePre();
-        if (array_key_exists('PHP_AUTH_USER', $_SERVER) && $_SERVER['PHP_AUTH_USER'] != $user) {
+        if (array_key_exists('REMOTE_USER', $_SERVER) && $_SERVER['REMOTE_USER'] != $user) {
             echo "<p><a href=\"$_SERVER[SCRIPT_NAME]\">Return to site as yourself.</a></p>\n";
         }
         die("</body></html>\n");
@@ -661,7 +661,7 @@ function studentFileTag($path, $classes='left') {
             //  return "<a href='$link' target='_blank'><img class='$classes width height' src='$link'/></a>";
         } else if (stripos($mime, 'text') !== FALSE && filesize($path) < 256 * 1024) {
             $contents = file_get_contents($path);
-            $contents = preg_replace('/[^\n\r \t!-~]/', '', $contents);
+            #$contents = preg_replace('/[^\n\r \t!-~]/', '', $contents);
             $default_display = filesize($path) > 64 * 1024 ? " style='display:none'" : "";
             return "<div class='$classes width'>File <a href='$link' target='_blank'><tt>$title</tt></a>: <input type='button' style='font-family:monospace' value='toggle visibility' onclick='e=this.nextSibling; e.setAttribute(\"style\", e.getAttribute(\"style\") ? \"\" : \"display:none\")'/><pre$default_display><code>" . htmlspecialchars($contents) . "</code></pre></div>";
         } else if (is_dir($path)) {
@@ -1265,9 +1265,80 @@ function sync_rubric_for_grade(&$grade) {
     } else if ($grade['kind'] == 'rubric') {
         return sync_rubric_items_for_grade_items($grade['items'], $rub['items']);
     } else if ($grade['kind'] == 'percentage') {
+        return FALSE;
     } else {
         user_error_msg('unknown kind '.$kind);
     }
+}
+
+function _parse_grade_log($log_lines, $is_incomplete, &$by_student, &$by_grader) {
+    foreach ($log_lines as $log_line) {
+        $grade = json_decode($log_line, true);
+        $summary = array(
+            'student' => $grade['student'],
+            'grader' => $grade['grader'],
+            'timestamp' => $grade['timestamp'],
+            'incomplete' => $is_incomplete,
+        );
+        if (!array_key_exists($summary['student'], $by_student)) {
+            $by_student[$summary['student']] = array();
+        }
+        if (!array_key_exists($summary['student'], $by_student)) {
+            $by_student[$summary['student']] = array();
+        }
+        if (!array_key_exists($summary['grader'], $by_grader)) {
+            $by_grader[$summary['grader']] = array();
+        }
+        if (!array_key_exists($summary['student'], $by_grader[$summary['grader']])) {
+            $by_grader[$summary['grader']][$summary['student']] = array();
+        }
+        $by_student[$summary['student']][] = $summary;
+        $by_grader[$summary['grader']][$summary['student']][] = $summary;
+    }
+}
+
+$_grade_history = array();
+function get_grade_history($slug) {
+    global $_grade_history;
+    if (!array_key_exists($slug, $_grade_history)) {
+        $_grade_history[$slug] = _get_grade_history($slug);
+    }
+    return $_grade_history[$slug];
+}
+
+function get_grade_history_for_student($slug, $student) {
+    $all_history = get_grade_history($slug);
+    if (array_key_exists($student, $all_history['by_student'])) {
+        return $all_history['by_student'][$student];
+    } else {
+        return array();
+    }
+}
+
+function _get_grade_history($slug) {
+    $by_student = array();
+    $by_grader = array();
+
+    if (file_exists("uploads/$slug/.gradetemplatelog")) {
+        $gradetemplatelog = file("uploads/$slug/.gradetemplatelog", FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES);
+    } else {
+        $gradetemplatelog = false;
+    }
+    if ($gradetemplatelog !== false) {
+        _parse_grade_log($gradetemplatelog, true, $by_student, $by_grader);
+    }
+    if (file_exists("uploads/$slug/.gradelog")) {
+        $gradelog = file("uploads/$slug/.gradelog", FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES);
+    } else {
+        $gradlog = false;
+    }
+    if ($gradelog !== false) {
+        _parse_grade_log($gradelog, false, $by_student, $by_grader);
+    }
+    return array(
+        "by_student" => $by_student,
+        "by_grader" => $by_grader,
+    );
 }
 
 function record_grade($details, $grade) {
@@ -1285,7 +1356,7 @@ function record_grade($details, $grade) {
     }
 
     $is_incomplete = sync_rubric_for_grade($grade);
-    
+
     // post to uploads/assignment/.gradelog and uploads/assignment/student/.grade
     $payload = json_encode($grade);
     if (!$is_incomplete) {
